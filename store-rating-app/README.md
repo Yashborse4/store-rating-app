@@ -44,7 +44,7 @@ A modern, full-featured store rating platform built with React and Node.js. Rate
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/store-rating-app.git
+   git clone https://github.com/yashborse4/store-rating-app.git
    cd store-rating-app
    ```
 
@@ -276,8 +276,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - **Documentation**: Check the `/docs` folder for detailed guides
-- **Issues**: Report bugs on [GitHub Issues](https://github.com/yourusername/store-rating-app/issues)
-- **Discussions**: Join conversations in [GitHub Discussions](https://github.com/yourusername/store-rating-app/discussions)
+- **Issues**: Report bugs on [GitHub Issues](https://github.com/yashborse4/store-rating-app/issues)
+- **Discussions**: Join conversations in [GitHub Discussions](https://github.com/yashborse4/store-rating-app/discussions)
 
 ## 🔄 Version History
 
