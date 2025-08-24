@@ -4,12 +4,10 @@ const bcrypt = require('bcryptjs');
 class User {
   constructor(data) {
     this.id = data.id;
-    this.username = data.username;
+    this.name = data.name;
     this.email = data.email;
     this.password_hash = data.password_hash;
-    this.role_id = data.role_id;
-    this.first_name = data.first_name;
-    this.last_name = data.last_name;
+    this.role = data.role;
     this.address = data.address;
     this.is_active = data.is_active;
     this.created_at = data.created_at;
@@ -18,7 +16,7 @@ class User {
 
   // Create a new user
   static async create(userData) {
-    const { username, email, password, role_id, first_name, last_name, address } = userData;
+    const { name, email, password, role = 'normal_user', address } = userData;
     
     try {
       // Hash password
@@ -26,12 +24,12 @@ class User {
       const password_hash = await bcrypt.hash(password, saltRounds);
       
       const query = `
-        INSERT INTO users (username, email, password_hash, role_id, first_name, last_name, address)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING id, username, email, role_id, first_name, last_name, address, is_active, created_at
+        INSERT INTO users (name, email, password_hash, role, address)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id, name, email, role, address, is_active, created_at
       `;
       
-      const values = [username, email, password_hash, role_id, first_name, last_name, address];
+      const values = [name, email, password_hash, role, address];
       const result = await pool.query(query, values);
       
       return new User(result.rows[0]);
@@ -44,10 +42,9 @@ class User {
   static async findByEmail(email) {
     try {
       const query = `
-        SELECT u.*, r.name as role_name
-        FROM users u
-        JOIN roles r ON u.role_id = r.id
-        WHERE u.email = $1 AND u.is_active = true
+        SELECT *
+        FROM users
+        WHERE email = $1 AND is_active = true
       `;
       
       const result = await pool.query(query, [email]);
@@ -56,35 +53,28 @@ class User {
         return null;
       }
       
-      return {
-        ...result.rows[0],
-        role_name: result.rows[0].role_name
-      };
+      return result.rows[0];
     } catch (error) {
       throw error;
     }
   }
 
-  // Find user by username
-  static async findByUsername(username) {
+  // Find user by name
+  static async findByName(name) {
     try {
       const query = `
-        SELECT u.*, r.name as role_name
-        FROM users u
-        JOIN roles r ON u.role_id = r.id
-        WHERE u.username = $1 AND u.is_active = true
+        SELECT *
+        FROM users
+        WHERE name = $1 AND is_active = true
       `;
       
-      const result = await pool.query(query, [username]);
+      const result = await pool.query(query, [name]);
       
       if (result.rows.length === 0) {
         return null;
       }
       
-      return {
-        ...result.rows[0],
-        role_name: result.rows[0].role_name
-      };
+      return result.rows[0];
     } catch (error) {
       throw error;
     }
@@ -94,10 +84,9 @@ class User {
   static async findById(id) {
     try {
       const query = `
-        SELECT u.*, r.name as role_name
-        FROM users u
-        JOIN roles r ON u.role_id = r.id
-        WHERE u.id = $1 AND u.is_active = true
+        SELECT *
+        FROM users
+        WHERE id = $1 AND is_active = true
       `;
       
       const result = await pool.query(query, [id]);
@@ -106,10 +95,7 @@ class User {
         return null;
       }
       
-      return {
-        ...result.rows[0],
-        role_name: result.rows[0].role_name
-      };
+      return result.rows[0];
     } catch (error) {
       throw error;
     }
@@ -124,12 +110,11 @@ class User {
   static async findAll(filters = {}) {
     try {
       let query = `
-        SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.address,
-               u.is_active, u.created_at, r.name as role_name,
+        SELECT u.id, u.name, u.email, u.address, u.role,
+               u.is_active, u.created_at,
                COALESCE(s.average_rating, 0) as average_rating
         FROM users u
-        JOIN roles r ON u.role_id = r.id
-        LEFT JOIN stores s ON u.id = s.owner_id AND r.name = 'store_owner'
+        LEFT JOIN stores s ON u.id = s.owner_user_id AND u.role = 'store_owner'
       `;
       
       const conditions = [];
@@ -138,7 +123,7 @@ class User {
       
       if (filters.name) {
         paramCount++;
-        conditions.push(`(u.first_name ILIKE $${paramCount} OR u.last_name ILIKE $${paramCount})`);
+        conditions.push(`u.name ILIKE $${paramCount}`);
         values.push(`%${filters.name}%`);
       }
       
@@ -156,7 +141,7 @@ class User {
       
       if (filters.role) {
         paramCount++;
-        conditions.push(`r.name = $${paramCount}`);
+        conditions.push(`u.role = $${paramCount}`);
         values.push(filters.role);
       }
       
@@ -180,7 +165,7 @@ class User {
         UPDATE users 
         SET is_active = $1, updated_at = CURRENT_TIMESTAMP
         WHERE id = $2
-        RETURNING id, username, email, is_active
+        RETURNING id, name, email, is_active
       `;
       
       const result = await pool.query(query, [is_active, id]);
@@ -201,7 +186,7 @@ class User {
         UPDATE users 
         SET password_hash = $1, updated_at = CURRENT_TIMESTAMP
         WHERE id = $2
-        RETURNING id, username, email
+        RETURNING id, name, email
       `;
       
       const result = await pool.query(query, [password_hash, id]);

@@ -7,8 +7,17 @@ const { validateRating } = require('../utils/validation');
  */
 const submitRating = async (req, res) => {
   try {
+    // Ensure only normal users can submit ratings
+    if (req.user.role !== 'normal_user') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only normal users can submit ratings.',
+        error: 'INSUFFICIENT_PERMISSIONS'
+      });
+    }
+
     const userId = req.user.id;
-    const { storeId, rating } = req.body;
+    const { storeId, rating, review_comment } = req.body;
 
     // Validate rating
     const ratingValidation = validateRating(rating);
@@ -41,7 +50,7 @@ const submitRating = async (req, res) => {
     }
 
     // Submit/update rating
-    const submittedRating = await Rating.submitRating(userId, storeId, ratingValidation.value);
+    const submittedRating = await Rating.submitRating(userId, storeId, ratingValidation.value, review_comment);
     
     // Update store rating statistics
     await Store.updateRatingStats(storeId);
@@ -53,7 +62,7 @@ const submitRating = async (req, res) => {
         rating: submittedRating,
         store: {
           id: store.id,
-          name: store.name
+          store_name: store.store_name
         }
       }
     });
@@ -137,6 +146,15 @@ const getMyRatings = async (req, res) => {
  */
 const deleteRating = async (req, res) => {
   try {
+    // Ensure only normal users can delete ratings
+    if (req.user.role !== 'normal_user') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only normal users can delete ratings.',
+        error: 'INSUFFICIENT_PERMISSIONS'
+      });
+    }
+
     const userId = req.user.id;
     const { storeId } = req.params;
 
@@ -180,10 +198,10 @@ const getStoreRatings = async (req, res) => {
     const currentUser = req.user;
     
     // Check permissions
-    if (currentUser.role_name === 'store_owner') {
+    if (currentUser.role === 'store_owner') {
       // Store owners can only view ratings for their own store
       const store = await Store.findById(parseInt(storeId));
-      if (!store || store.owner_id !== currentUser.id) {
+      if (!store || store.owner_user_id !== currentUser.id) {
         return res.status(403).json({
           success: false,
           message: 'You can only view ratings for your own store.',
@@ -240,8 +258,8 @@ const getStoreRatingStats = async (req, res) => {
       data: {
         store: {
           id: store.id,
-          name: store.name,
-          address: store.address
+          store_name: store.store_name,
+          store_description: store.store_description
         },
         statistics: ratingStats
       }

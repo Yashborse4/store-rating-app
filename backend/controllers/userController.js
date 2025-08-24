@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const Role = require('../models/Role');
 const Store = require('../models/Store');
 const Rating = require('../models/Rating');
 const { validateUserRegistration, validatePassword } = require('../utils/validation');
@@ -128,8 +127,9 @@ const getUsersByRole = async (req, res) => {
   try {
     const { roleName } = req.params;
     
-    const role = await Role.findByName(roleName);
-    if (!role) {
+    // Validate role
+    const validRoles = ['system_admin', 'normal_user', 'store_owner'];
+    if (!validRoles.includes(roleName)) {
       return res.status(404).json({
         success: false,
         message: 'Role not found.',
@@ -138,9 +138,9 @@ const getUsersByRole = async (req, res) => {
     }
 
     // Check permissions: Admin can see all, Store Owner can only see normal_user and store_owner
-    if (req.user.role_name !== Role.ROLES.SYSTEM_ADMIN) {
-      if (req.user.role_name === Role.ROLES.STORE_OWNER && 
-          ![Role.ROLES.NORMAL_USER, Role.ROLES.STORE_OWNER].includes(roleName)) {
+    if (req.user.role !== 'system_admin') {
+      if (req.user.role === 'store_owner' && 
+          !['normal_user', 'store_owner'].includes(roleName)) {
         return res.status(403).json({
           success: false,
           message: 'Insufficient permissions to view this role.',
@@ -149,16 +149,15 @@ const getUsersByRole = async (req, res) => {
       }
     }
 
-    const users = await User.findAll();
-    const filteredUsers = users.filter(user => user.role_name === roleName);
+    const users = await User.findAll({ role: roleName });
     
     res.status(200).json({
       success: true,
       message: `Users with role '${roleName}' retrieved successfully.`,
       data: {
-        users: filteredUsers,
+        users,
         role: roleName,
-        total: filteredUsers.length
+        total: users.length
       }
     });
 
@@ -190,7 +189,7 @@ const createUser = async (req, res) => {
       });
     }
 
-    const { username, email, password, role_name, first_name, last_name, address } = validation.data;
+    const { name, email, password, role = 'normal_user', address } = validation.data;
 
     // Check if user already exists
     const existingUserByEmail = await User.findByEmail(email);
@@ -202,18 +201,9 @@ const createUser = async (req, res) => {
       });
     }
 
-    const existingUserByUsername = await User.findByUsername(username);
-    if (existingUserByUsername) {
-      return res.status(409).json({
-        success: false,
-        message: 'Username is already taken.',
-        error: 'USERNAME_EXISTS'
-      });
-    }
-
-    // Get role ID
-    const role = await Role.findByName(role_name);
-    if (!role) {
+    // Validate role
+    const validRoles = ['system_admin', 'normal_user', 'store_owner'];
+    if (!validRoles.includes(role)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid role specified.',
@@ -223,12 +213,10 @@ const createUser = async (req, res) => {
 
     // Create user
     const newUser = await User.create({
-      username,
+      name,
       email,
       password,
-      role_id: role.id,
-      first_name,
-      last_name,
+      role,
       address
     });
 
@@ -239,10 +227,7 @@ const createUser = async (req, res) => {
       success: true,
       message: 'User created successfully.',
       data: {
-        user: {
-          ...userWithoutPassword,
-          role_name: role_name
-        }
+        user: userWithoutPassword
       }
     });
 
@@ -267,9 +252,9 @@ const getDashboardStats = async (req, res) => {
     
     // Get user counts by role
     const usersByRole = {
-      system_admin: allUsers.filter(user => user.role_name === 'system_admin').length,
-      normal_user: allUsers.filter(user => user.role_name === 'normal_user').length,
-      store_owner: allUsers.filter(user => user.role_name === 'store_owner').length
+      system_admin: allUsers.filter(user => user.role === 'system_admin').length,
+      normal_user: allUsers.filter(user => user.role === 'normal_user').length,
+      store_owner: allUsers.filter(user => user.role === 'store_owner').length
     };
     
     // Get all stores
@@ -331,7 +316,7 @@ const updatePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     
     // Ensure user can only update their own password unless they're admin
-    if (req.user.role_name !== Role.ROLES.SYSTEM_ADMIN && req.user.id !== parseInt(userId)) {
+    if (req.user.role !== 'system_admin' && req.user.id !== parseInt(userId)) {
       return res.status(403).json({
         success: false,
         message: 'You can only update your own password.',
@@ -349,7 +334,7 @@ const updatePassword = async (req, res) => {
     }
     
     // If not admin, verify current password
-    if (req.user.role_name !== Role.ROLES.SYSTEM_ADMIN) {
+    if (req.user.role !== 'system_admin') {
       if (!currentPassword) {
         return res.status(400).json({
           success: false,

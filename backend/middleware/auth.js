@@ -1,6 +1,5 @@
 const { verifyToken, extractToken } = require('../utils/jwt');
 const User = require('../models/User');
-const Role = require('../models/Role');
 
 /**
  * Middleware to verify JWT token and authenticate user
@@ -42,12 +41,10 @@ const authenticateToken = async (req, res, next) => {
     // Add user info to request object
     req.user = {
       id: user.id,
-      username: user.username,
+      name: user.name,
       email: user.email,
-      role_id: user.role_id,
-      role_name: user.role_name,
-      first_name: user.first_name,
-      last_name: user.last_name
+      role: user.role,
+      address: user.address
     };
 
     next();
@@ -95,13 +92,13 @@ const requireRole = (allowedRoles) => {
     const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
     
     // Check if user's role is in allowed roles
-    if (!roles.includes(req.user.role_name)) {
+    if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
         message: 'Insufficient permissions.',
         error: 'INSUFFICIENT_PERMISSIONS',
         required_role: roles,
-        user_role: req.user.role_name
+        user_role: req.user.role
       });
     }
 
@@ -112,17 +109,17 @@ const requireRole = (allowedRoles) => {
 /**
  * Middleware to check if user is system admin
  */
-const requireAdmin = requireRole(Role.ROLES.SYSTEM_ADMIN);
+const requireAdmin = requireRole('system_admin');
 
 /**
  * Middleware to check if user is store owner or admin
  */
-const requireStoreOwnerOrAdmin = requireRole([Role.ROLES.STORE_OWNER, Role.ROLES.SYSTEM_ADMIN]);
+const requireStoreOwnerOrAdmin = requireRole(['store_owner', 'system_admin']);
 
 /**
  * Middleware to check if user is normal user
  */
-const requireNormalUser = requireRole(Role.ROLES.NORMAL_USER);
+const requireNormalUser = requireRole('normal_user');
 
 /**
  * Middleware to check if user can access their own resource or is admin
@@ -139,7 +136,7 @@ const requireOwnershipOrAdmin = (req, res, next) => {
 
   const targetUserId = parseInt(req.params.userId);
   const currentUserId = req.user.id;
-  const isAdmin = req.user.role_name === Role.ROLES.SYSTEM_ADMIN;
+  const isAdmin = req.user.role === 'system_admin';
 
   // Allow if user is admin or accessing their own resource
   if (isAdmin || currentUserId === targetUserId) {
@@ -168,12 +165,10 @@ const optionalAuth = async (req, res, next) => {
       if (user && user.is_active) {
         req.user = {
           id: user.id,
-          username: user.username,
+          name: user.name,
           email: user.email,
-          role_id: user.role_id,
-          role_name: user.role_name,
-          first_name: user.first_name,
-          last_name: user.last_name
+          role: user.role,
+          address: user.address
         };
       }
     }

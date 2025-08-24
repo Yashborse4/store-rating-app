@@ -6,22 +6,23 @@ class Rating {
     this.user_id = data.user_id;
     this.store_id = data.store_id;
     this.rating = data.rating;
-    this.created_at = data.created_at;
+    this.review_comment = data.review_comment;
+    this.rating_given_at = data.rating_given_at;
     this.updated_at = data.updated_at;
   }
 
   // Submit or update a rating
-  static async submitRating(userId, storeId, rating) {
+  static async submitRating(userId, storeId, rating, review_comment = null) {
     try {
       const query = `
-        INSERT INTO ratings (user_id, store_id, rating)
-        VALUES ($1, $2, $3)
+        INSERT INTO ratings (user_id, store_id, rating, review_comment)
+        VALUES ($1, $2, $3, $4)
         ON CONFLICT (user_id, store_id)
-        DO UPDATE SET rating = $3, updated_at = CURRENT_TIMESTAMP
-        RETURNING id, user_id, store_id, rating, created_at, updated_at
+        DO UPDATE SET rating = $3, review_comment = $4, updated_at = CURRENT_TIMESTAMP
+        RETURNING id, user_id, store_id, rating, review_comment, rating_given_at, updated_at
       `;
       
-      const values = [userId, storeId, rating];
+      const values = [userId, storeId, rating, review_comment];
       const result = await pool.query(query, values);
       
       return new Rating(result.rows[0]);
@@ -34,7 +35,7 @@ class Rating {
   static async findByUserAndStore(userId, storeId) {
     try {
       const query = `
-        SELECT r.*, u.first_name, u.last_name, u.username, s.name as store_name
+        SELECT r.*, u.name as user_name, u.email as user_email, s.store_name
         FROM ratings r
         JOIN users u ON r.user_id = u.id
         JOIN stores s ON r.store_id = s.id
@@ -57,11 +58,11 @@ class Rating {
   static async findByStoreId(storeId) {
     try {
       const query = `
-        SELECT r.*, u.first_name, u.last_name, u.username, u.email
+        SELECT r.*, u.name as user_name, u.email as user_email
         FROM ratings r
         JOIN users u ON r.user_id = u.id
         WHERE r.store_id = $1
-        ORDER BY r.created_at DESC
+        ORDER BY r.rating_given_at DESC
       `;
       
       const result = await pool.query(query, [storeId]);
@@ -75,11 +76,11 @@ class Rating {
   static async findByUserId(userId) {
     try {
       const query = `
-        SELECT r.*, s.name as store_name, s.address as store_address
+        SELECT r.*, s.store_name, s.store_description
         FROM ratings r
         JOIN stores s ON r.store_id = s.id
         WHERE r.user_id = $1
-        ORDER BY r.created_at DESC
+        ORDER BY r.rating_given_at DESC
       `;
       
       const result = await pool.query(query, [userId]);
@@ -182,12 +183,12 @@ class Rating {
     try {
       const query = `
         SELECT r.*, 
-               u.first_name, u.last_name, u.username,
-               s.name as store_name, s.address as store_address
+               u.name as user_name, u.email as user_email,
+               s.store_name, s.store_description
         FROM ratings r
         JOIN users u ON r.user_id = u.id
         JOIN stores s ON r.store_id = s.id
-        ORDER BY r.created_at DESC
+        ORDER BY r.rating_given_at DESC
         LIMIT $1
       `;
       

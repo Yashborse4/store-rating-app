@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const Role = require('../models/Role');
 const { generateToken, generateRefreshToken, getRoleRedirectUrl } = require('../utils/jwt');
 const { validateUserRegistration, validatePassword } = require('../utils/validation');
 
@@ -21,7 +20,7 @@ const register = async (req, res) => {
       });
     }
 
-    const { username, email, password, role_name, first_name, last_name, address } = validation.data;
+    const { name, email, password, role = 'normal_user', address } = validation.data;
 
     // Check if user already exists
     const existingUserByEmail = await User.findByEmail(email);
@@ -33,18 +32,9 @@ const register = async (req, res) => {
       });
     }
 
-    const existingUserByUsername = await User.findByUsername(username);
-    if (existingUserByUsername) {
-      return res.status(409).json({
-        success: false,
-        message: 'Username is already taken.',
-        error: 'USERNAME_EXISTS'
-      });
-    }
-
-    // Get role ID
-    const role = await Role.findByName(role_name);
-    if (!role) {
+    // Validate role
+    const validRoles = ['system_admin', 'normal_user', 'store_owner'];
+    if (!validRoles.includes(role)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid role specified.',
@@ -54,21 +44,19 @@ const register = async (req, res) => {
 
     // Create user
     const newUser = await User.create({
-      username,
+      name,
       email,
       password,
-      role_id: role.id,
-      first_name,
-      last_name,
+      role,
       address
     });
 
     // Generate tokens
     const tokenPayload = {
       userId: newUser.id,
-      username: newUser.username,
+      name: newUser.name,
       email: newUser.email,
-      role_name: role_name
+      role: role
     };
 
     const token = generateToken(tokenPayload);
@@ -80,16 +68,14 @@ const register = async (req, res) => {
       data: {
         user: {
           id: newUser.id,
-          username: newUser.username,
+          name: newUser.name,
           email: newUser.email,
-          role_name: role_name,
-          first_name: newUser.first_name,
-          last_name: newUser.last_name,
+          role: role,
           address: newUser.address
         },
         token,
         refreshToken,
-        redirectUrl: getRoleRedirectUrl(role_name)
+        redirectUrl: getRoleRedirectUrl(role)
       }
     });
 
@@ -151,9 +137,9 @@ const login = async (req, res) => {
     // Generate tokens
     const tokenPayload = {
       userId: user.id,
-      username: user.username,
+      name: user.name,
       email: user.email,
-      role_name: user.role_name
+      role: user.role
     };
 
     const token = generateToken(tokenPayload);
@@ -165,15 +151,14 @@ const login = async (req, res) => {
       data: {
         user: {
           id: user.id,
-          username: user.username,
+          name: user.name,
           email: user.email,
-          role_name: user.role_name,
-          first_name: user.first_name,
-          last_name: user.last_name
+          role: user.role,
+          address: user.address
         },
         token,
         refreshToken,
-        redirectUrl: getRoleRedirectUrl(user.role_name)
+        redirectUrl: getRoleRedirectUrl(user.role)
       }
     });
 
@@ -200,11 +185,10 @@ const getProfile = async (req, res) => {
       data: {
         user: {
           id: user.id,
-          username: user.username,
+          name: user.name,
           email: user.email,
-          role_name: user.role_name,
-          first_name: user.first_name,
-          last_name: user.last_name
+          role: user.role,
+          address: user.address
         }
       }
     });
@@ -251,7 +235,7 @@ const logout = async (req, res) => {
 const getDashboard = async (req, res) => {
   try {
     const user = req.user; // Set by authenticateToken middleware
-    const redirectUrl = getRoleRedirectUrl(user.role_name);
+    const redirectUrl = getRoleRedirectUrl(user.role);
 
     res.status(200).json({
       success: true,
@@ -259,13 +243,12 @@ const getDashboard = async (req, res) => {
       data: {
         user: {
           id: user.id,
-          username: user.username,
-          role_name: user.role_name,
-          first_name: user.first_name,
-          last_name: user.last_name
+          name: user.name,
+          role: user.role,
+          address: user.address
         },
         redirectUrl,
-        dashboardType: user.role_name
+        dashboardType: user.role
       }
     });
 
@@ -284,17 +267,17 @@ const getDashboard = async (req, res) => {
  */
 const getRoles = async (req, res) => {
   try {
-    const roles = await Role.findAll();
+    const roles = [
+      { name: 'system_admin', description: 'System Administrator' },
+      { name: 'normal_user', description: 'Normal User' },
+      { name: 'store_owner', description: 'Store Owner' }
+    ];
     
     res.status(200).json({
       success: true,
       message: 'Roles retrieved successfully.',
       data: {
-        roles: roles.map(role => ({
-          id: role.id,
-          name: role.name,
-          description: role.description
-        }))
+        roles
       }
     });
 

@@ -3,10 +3,10 @@ const { pool } = require('../config/database');
 class Store {
   constructor(data) {
     this.id = data.id;
-    this.name = data.name;
-    this.email = data.email;
-    this.address = data.address;
-    this.owner_id = data.owner_id;
+    this.store_name = data.store_name;
+    this.store_id = data.store_id;
+    this.owner_user_id = data.owner_user_id;
+    this.store_description = data.store_description;
     this.average_rating = data.average_rating;
     this.total_ratings = data.total_ratings;
     this.is_active = data.is_active;
@@ -16,16 +16,16 @@ class Store {
 
   // Create a new store
   static async create(storeData) {
-    const { name, email, address, owner_id } = storeData;
+    const { store_name, store_id, owner_user_id, store_description } = storeData;
     
     try {
       const query = `
-        INSERT INTO stores (name, email, address, owner_id)
+        INSERT INTO stores (store_name, store_id, owner_user_id, store_description)
         VALUES ($1, $2, $3, $4)
-        RETURNING id, name, email, address, owner_id, average_rating, total_ratings, is_active, created_at
+        RETURNING id, store_name, store_id, owner_user_id, store_description, average_rating, total_ratings, is_active, created_at
       `;
       
-      const values = [name, email, address, owner_id];
+      const values = [store_name, store_id, owner_user_id, store_description];
       const result = await pool.query(query, values);
       
       return new Store(result.rows[0]);
@@ -38,10 +38,9 @@ class Store {
   static async findById(id) {
     try {
       const query = `
-        SELECT s.*, u.first_name as owner_first_name, u.last_name as owner_last_name,
-               u.username as owner_username
+        SELECT s.*, u.name as owner_name, u.email as owner_email
         FROM stores s
-        LEFT JOIN users u ON s.owner_id = u.id
+        LEFT JOIN users u ON s.owner_user_id = u.id
         WHERE s.id = $1 AND s.is_active = true
       `;
       
@@ -57,17 +56,17 @@ class Store {
     }
   }
 
-  // Find store by email
-  static async findByEmail(email) {
+  // Find store by store_id
+  static async findByStoreId(store_id) {
     try {
       const query = `
-        SELECT s.*, u.first_name as owner_first_name, u.last_name as owner_last_name
+        SELECT s.*, u.name as owner_name, u.email as owner_email
         FROM stores s
-        LEFT JOIN users u ON s.owner_id = u.id
-        WHERE s.email = $1 AND s.is_active = true
+        LEFT JOIN users u ON s.owner_user_id = u.id
+        WHERE s.store_id = $1 AND s.is_active = true
       `;
       
-      const result = await pool.query(query, [email]);
+      const result = await pool.query(query, [store_id]);
       
       if (result.rows.length === 0) {
         return null;
@@ -79,17 +78,17 @@ class Store {
     }
   }
 
-  // Find store by owner ID
-  static async findByOwnerId(owner_id) {
+  // Find store by owner user ID
+  static async findByOwnerUserId(owner_user_id) {
     try {
       const query = `
-        SELECT s.*, u.first_name as owner_first_name, u.last_name as owner_last_name
+        SELECT s.*, u.name as owner_name, u.email as owner_email
         FROM stores s
-        LEFT JOIN users u ON s.owner_id = u.id
-        WHERE s.owner_id = $1 AND s.is_active = true
+        LEFT JOIN users u ON s.owner_user_id = u.id
+        WHERE s.owner_user_id = $1 AND s.is_active = true
       `;
       
-      const result = await pool.query(query, [owner_id]);
+      const result = await pool.query(query, [owner_user_id]);
       
       if (result.rows.length === 0) {
         return null;
@@ -105,10 +104,9 @@ class Store {
   static async findAll(filters = {}) {
     try {
       let query = `
-        SELECT s.*, u.first_name as owner_first_name, u.last_name as owner_last_name,
-               u.username as owner_username
+        SELECT s.*, u.name as owner_name, u.email as owner_email
         FROM stores s
-        LEFT JOIN users u ON s.owner_id = u.id
+        LEFT JOIN users u ON s.owner_user_id = u.id
         WHERE s.is_active = true
       `;
       
@@ -116,22 +114,22 @@ class Store {
       const values = [];
       let paramCount = 0;
       
-      if (filters.name) {
+      if (filters.store_name) {
         paramCount++;
-        conditions.push(`s.name ILIKE $${paramCount}`);
-        values.push(`%${filters.name}%`);
+        conditions.push(`s.store_name ILIKE $${paramCount}`);
+        values.push(`%${filters.store_name}%`);
       }
       
-      if (filters.address) {
+      if (filters.store_id) {
         paramCount++;
-        conditions.push(`s.address ILIKE $${paramCount}`);
-        values.push(`%${filters.address}%`);
+        conditions.push(`s.store_id ILIKE $${paramCount}`);
+        values.push(`%${filters.store_id}%`);
       }
       
-      if (filters.email) {
+      if (filters.store_description) {
         paramCount++;
-        conditions.push(`s.email ILIKE $${paramCount}`);
-        values.push(`%${filters.email}%`);
+        conditions.push(`s.store_description ILIKE $${paramCount}`);
+        values.push(`%${filters.store_description}%`);
       }
       
       if (conditions.length > 0) {
@@ -150,16 +148,16 @@ class Store {
   // Update store information
   static async update(id, updateData) {
     try {
-      const { name, email, address } = updateData;
+      const { store_name, store_id, store_description } = updateData;
       
       const query = `
         UPDATE stores 
-        SET name = $1, email = $2, address = $3, updated_at = CURRENT_TIMESTAMP
+        SET store_name = $1, store_id = $2, store_description = $3, updated_at = CURRENT_TIMESTAMP
         WHERE id = $4 AND is_active = true
-        RETURNING id, name, email, address, owner_id, average_rating, total_ratings, is_active, updated_at
+        RETURNING id, store_name, store_id, owner_user_id, store_description, average_rating, total_ratings, is_active, updated_at
       `;
       
-      const result = await pool.query(query, [name, email, address, id]);
+      const result = await pool.query(query, [store_name, store_id, store_description, id]);
       
       if (result.rows.length === 0) {
         return null;
@@ -178,7 +176,7 @@ class Store {
         UPDATE stores 
         SET is_active = $1, updated_at = CURRENT_TIMESTAMP
         WHERE id = $2
-        RETURNING id, name, email, is_active
+        RETURNING id, store_name, store_id, is_active
       `;
       
       const result = await pool.query(query, [is_active, id]);
@@ -206,7 +204,7 @@ class Store {
           ),
           updated_at = CURRENT_TIMESTAMP
         WHERE id = $1
-        RETURNING id, name, average_rating, total_ratings
+        RETURNING id, store_name, average_rating, total_ratings
       `;
       
       const result = await pool.query(query, [storeId]);
@@ -220,10 +218,10 @@ class Store {
   static async findAllWithUserRating(userId, filters = {}) {
     try {
       let query = `
-        SELECT s.*, u.first_name as owner_first_name, u.last_name as owner_last_name,
+        SELECT s.*, u.name as owner_name, u.email as owner_email,
                r.rating as user_rating
         FROM stores s
-        LEFT JOIN users u ON s.owner_id = u.id
+        LEFT JOIN users u ON s.owner_user_id = u.id
         LEFT JOIN ratings r ON s.id = r.store_id AND r.user_id = $1
         WHERE s.is_active = true
       `;
@@ -232,16 +230,16 @@ class Store {
       const values = [userId];
       let paramCount = 1;
       
-      if (filters.name) {
+      if (filters.store_name) {
         paramCount++;
-        conditions.push(`s.name ILIKE $${paramCount}`);
-        values.push(`%${filters.name}%`);
+        conditions.push(`s.store_name ILIKE $${paramCount}`);
+        values.push(`%${filters.store_name}%`);
       }
       
-      if (filters.address) {
+      if (filters.store_description) {
         paramCount++;
-        conditions.push(`s.address ILIKE $${paramCount}`);
-        values.push(`%${filters.address}%`);
+        conditions.push(`s.store_description ILIKE $${paramCount}`);
+        values.push(`%${filters.store_description}%`);
       }
       
       if (conditions.length > 0) {

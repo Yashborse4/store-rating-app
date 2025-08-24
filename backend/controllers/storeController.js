@@ -8,46 +8,42 @@ const { validateStoreData } = require('../utils/validation');
 const createStore = async (req, res) => {
   try {
     const storeData = req.body;
-    const { owner_id } = req.body;
+    const { store_name, store_id, owner_user_id, store_description } = req.body;
 
-    // Validate store data
-    const validation = validateStoreData(storeData);
-    if (!validation.isValid) {
+    // Basic validation
+    if (!store_name || !store_id || !owner_user_id) {
       return res.status(400).json({
         success: false,
-        message: 'Validation failed.',
-        error: 'VALIDATION_ERROR',
-        errors: validation.errors
+        message: 'Store name, store ID, and owner user ID are required.',
+        error: 'MISSING_REQUIRED_FIELDS'
       });
     }
 
-    const { name, email, address } = validation.data;
-
-    // Validate owner_id if provided
-    if (!owner_id || typeof owner_id !== 'number') {
+    // Validate owner_user_id
+    if (typeof owner_user_id !== 'number') {
       return res.status(400).json({
         success: false,
-        message: 'Valid owner_id is required.',
-        error: 'INVALID_OWNER_ID'
+        message: 'Valid owner_user_id is required.',
+        error: 'INVALID_OWNER_USER_ID'
       });
     }
 
-    // Check if store email already exists
-    const existingStore = await Store.findByEmail(email);
+    // Check if store_id already exists
+    const existingStore = await Store.findByStoreId(store_id);
     if (existingStore) {
       return res.status(409).json({
         success: false,
-        message: 'A store with this email already exists.',
-        error: 'EMAIL_EXISTS'
+        message: 'A store with this store ID already exists.',
+        error: 'STORE_ID_EXISTS'
       });
     }
 
     // Create store
     const newStore = await Store.create({
-      name,
-      email,
-      address,
-      owner_id
+      store_name,
+      store_id,
+      owner_user_id,
+      store_description
     });
 
     res.status(201).json({
@@ -73,12 +69,12 @@ const createStore = async (req, res) => {
  */
 const getAllStores = async (req, res) => {
   try {
-    const { name, address, email } = req.query;
+    const { store_name, store_id, store_description } = req.query;
     const filters = {};
 
-    if (name) filters.name = name;
-    if (address) filters.address = address;
-    if (email) filters.email = email;
+    if (store_name) filters.store_name = store_name;
+    if (store_id) filters.store_id = store_id;
+    if (store_description) filters.store_description = store_description;
 
     const stores = await Store.findAll(filters);
 
@@ -108,11 +104,11 @@ const getAllStores = async (req, res) => {
 const getStoresWithUserRating = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { name, address } = req.query;
+    const { store_name, store_description } = req.query;
     const filters = {};
 
-    if (name) filters.name = name;
-    if (address) filters.address = address;
+    if (store_name) filters.store_name = store_name;
+    if (store_description) filters.store_description = store_description;
 
     const stores = await Store.findAllWithUserRating(userId, filters);
 
@@ -122,11 +118,12 @@ const getStoresWithUserRating = async (req, res) => {
       data: {
         stores: stores.map(store => ({
           id: store.id,
-          name: store.name,
-          address: store.address,
+          store_name: store.store_name,
+          store_id: store.store_id,
+          store_description: store.store_description,
           average_rating: parseFloat(store.average_rating || 0),
           user_rating: store.user_rating || null,
-          owner_name: `${store.owner_first_name || ''} ${store.owner_last_name || ''}`.trim()
+          owner_name: store.owner_name || ''
         })),
         total: stores.length,
         filters: filters
@@ -275,7 +272,7 @@ const getMyStore = async (req, res) => {
   try {
     const ownerId = req.user.id;
     
-    const store = await Store.findByOwnerId(ownerId);
+    const store = await Store.findByOwnerUserId(ownerId);
     if (!store) {
       return res.status(404).json({
         success: false,
@@ -320,7 +317,7 @@ const getStoreRatings = async (req, res) => {
     
     // Verify store ownership
     const store = await Store.findById(parseInt(storeId));
-    if (!store || store.owner_id !== ownerId) {
+    if (!store || store.owner_user_id !== ownerId) {
       return res.status(403).json({
         success: false,
         message: 'You can only view ratings for your own store.',
@@ -337,7 +334,7 @@ const getStoreRatings = async (req, res) => {
       data: {
         store: {
           id: store.id,
-          name: store.name,
+          store_name: store.store_name,
           average_rating: parseFloat(store.average_rating || 0)
         },
         ratings,
