@@ -2,7 +2,6 @@
 
 A modern, full-featured store rating platform built with React and Node.js. Rate stores, discover new places, and help others make informed shopping decisions.
 
-![StoreRater Hero](https://via.placeholder.com/800x400/0a0a0a/ffffff?text=StoreRater+Store+Rating+Platform)
 
 ## ✨ Features
 
@@ -39,19 +38,6 @@ A modern, full-featured store rating platform built with React and Node.js. Rate
 - Node.js (v14 or higher)
 - npm or yarn
 - Git
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yashborse4/store-rating-app.git
-   cd store-rating-app
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
 
 3. **Set up environment variables**
    ```bash
@@ -99,25 +85,6 @@ store-rating-app/
 └── package.json
 ```
 
-## 🎨 Design System
-
-### Color Palette
-- **Primary**: Modern dark theme with glass morphism effects
-- **Background**: Rich gradients from deep black to charcoal
-- **Glass Cards**: Translucent white overlays with backdrop blur
-- **Text**: High contrast white and gray tones for accessibility
-- **Accent**: Clean white for buttons and highlights
-
-### Typography
-- **Font**: Inter - Modern, readable, and professional
-- **Hierarchy**: Clear size and weight distinctions
-- **Spacing**: Consistent vertical rhythm throughout
-
-### Components
-- **Glass Cards**: Modern cards with backdrop blur and subtle borders
-- **Buttons**: Multiple variants with smooth hover animations
-- **Forms**: Clean inputs with focus states and validation feedback
-- **Navigation**: Responsive navbar with mobile-friendly design
 
 ## 🔧 Configuration
 
@@ -145,22 +112,7 @@ The application is fully responsive and optimized for:
 - **Tablet** (768px-1199px) - Adapted layout with collapsible elements
 - **Mobile** (320px-767px) - Mobile-first design with touch-friendly interactions
 
-## 🚀 Deployment
 
-### Production Build
-```bash
-# Create optimized production build
-npm run build
-
-# The build folder contains the production-ready files
-```
-
-### Hosting Options
-
-#### Static Hosting (Recommended)
-- **Netlify**: Drag and drop the `build` folder
-- **Vercel**: Connect GitHub repo for automatic deployments
-- **AWS S3 + CloudFront**: For enterprise deployments
 
 #### Server Deployment
 ```bash
@@ -171,57 +123,7 @@ npm install -g serve
 serve -s build -l 3000
 ```
 
-### Environment Setup
-1. Update `REACT_APP_API_URL` in `.env.production`
-2. Configure your backend CORS settings
-3. Set up HTTPS certificates
-4. Configure monitoring and analytics
-
-## 🧪 Testing
-
-```bash
-# Run tests
-npm test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run tests in watch mode
-npm test -- --watch
-```
-
-## 📊 Performance
-
-### Optimizations
-- **Code Splitting**: Automatic route-based splitting
-- **Lazy Loading**: Components loaded on demand
-- **Asset Optimization**: Images and fonts optimized
-- **Caching**: Service worker for offline capability
-- **Bundle Analysis**: Use `npm run analyze` to inspect bundle size
-
-### Performance Targets
-- First Contentful Paint: < 1.5s
-- Largest Contentful Paint: < 2.5s
-- Cumulative Layout Shift: < 0.1
-- First Input Delay: < 100ms
-
-## 🔒 Security
-
-### Features
-- **Authentication**: Secure JWT-based authentication
-- **Authorization**: Role-based access control
-- **Input Validation**: Client and server-side validation
-- **HTTPS**: Production deployment enforces HTTPS
-- **Environment Variables**: Sensitive data in environment files
-
-### Best Practices
-- No hardcoded credentials or API keys
-- Proper error handling without exposing system details
-- Input sanitization and validation
-- Secure session management
-
 ## 🛠️ Development
-
 ### Scripts
 ```bash
 npm start          # Start development server
@@ -232,68 +134,6 @@ npm run lint:fix   # Fix ESLint issues
 npm run analyze    # Analyze bundle size
 ```
 
-### Code Style
-- **ESLint**: Configured with React best practices
-- **Prettier**: Automatic code formatting
-- **Consistent**: Follow established patterns in the codebase
 
-## 🤝 Contributing
-
-1. **Fork the repository**
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. **Make your changes**
-4. **Add tests** for new functionality
-5. **Commit your changes**
-   ```bash
-   git commit -m 'Add amazing feature'
-   ```
-6. **Push to the branch**
-   ```bash
-   git push origin feature/amazing-feature
-   ```
-7. **Open a Pull Request**
-
-### Development Guidelines
-- Write clear, self-documenting code
-- Add tests for new features
-- Follow the existing code style
-- Update documentation as needed
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **React Team** - For the amazing framework
-- **React Icons** - Beautiful icon library
-- **Framer Motion** - Smooth animations
-- **Design Inspiration** - Modern web design trends
-
-## 📞 Support
-
-- **Documentation**: Check the `/docs` folder for detailed guides
-- **Issues**: Report bugs on [GitHub Issues](https://github.com/yashborse4/store-rating-app/issues)
-- **Discussions**: Join conversations in [GitHub Discussions](https://github.com/yashborse4/store-rating-app/discussions)
-
-## 🔄 Version History
-
-### v1.0.0 (Current)
-- ✅ Complete authentication system
-- ✅ Store rating and review functionality
-- ✅ Modern, responsive UI design
-- ✅ Role-based access control
-- ✅ Production-ready deployment
-- ✅ Comprehensive documentation
-
----
-
-<div align="center">
-  <p>Built with ❤️ using React</p>
-  <p>
-    <a href="#top">Back to top</a>
   </p>
 </div>
