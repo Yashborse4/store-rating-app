@@ -2,6 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
+import { 
+  FiStar, 
+  FiUsers, 
+  FiShield, 
+  FiTrendingUp,
+  FiArrowRight,
+  FiAward
+} from 'react-icons/fi';
 import './Home.css';
 
 const Home = () => {
@@ -22,155 +30,197 @@ const Home = () => {
     }
   };
 
+  const features = [
+    {
+      icon: <FiStar />,
+      title: "Smart Rating System",
+      description: "Rate stores with our intuitive 5-star system and help build a trustworthy community."
+    },
+    {
+      icon: <FiUsers />,
+      title: "Community Driven",
+      description: "Join thousands of users sharing honest reviews and recommendations."
+    },
+    {
+      icon: <FiShield />,
+      title: "Verified Reviews",
+      description: "All reviews are verified and authenticated to ensure genuine feedback."
+    },
+    {
+      icon: <FiTrendingUp />,
+      title: "Real-time Analytics",
+      description: "Store owners get detailed insights and analytics on their performance."
+    }
+  ];
+
+  const userTypes = [
+    {
+      title: "System Admin",
+      features: [
+        "Manage all users and permissions",
+        "View comprehensive system statistics",
+        "Add and manage store listings",
+        "Monitor platform health and activity"
+      ]
+    },
+    {
+      title: "Regular User",
+      features: [
+        "Rate and review stores (1-5 stars)",
+        "Search and discover new stores",
+        "View detailed store information",
+        "Manage your personal ratings"
+      ]
+    },
+    {
+      title: "Store Owner",
+      features: [
+        "Access detailed store analytics",
+        "Monitor customer feedback",
+        "Track performance metrics",
+        "Respond to customer reviews"
+      ]
+    }
+  ];
+
   return (
     <>
       <Navbar />
-      <div style={{ minHeight: '100vh', padding: '20px', fontFamily: 'Arial, sans-serif', backgroundColor: '#f8f9fa' }}>
-        {/* Main Content */}
-        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', paddingTop: '40px' }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '20px', color: '#333' }}>
-          Welcome to Store Rating System
-        </h1>
-        <p style={{ fontSize: '1.2rem', color: '#666', marginBottom: '40px' }}>
-          Rate and review stores to help others make better shopping decisions.
-        </p>
-
-        {user ? (
-          <div style={{ 
-            backgroundColor: '#f8f9fa', 
-            padding: '30px', 
-            borderRadius: '8px',
-            border: '1px solid #dee2e6',
-            marginBottom: '40px'
-          }}>
-            <h3 style={{ color: '#333', marginBottom: '20px' }}>Your Account</h3>
-            <p style={{ marginBottom: '10px' }}><strong>Role:</strong> {user.role}</p>
-            <p style={{ marginBottom: '20px' }}><strong>Email:</strong> {user.email}</p>
-            <Link 
-              to={getDashboardUrl()}
-              style={{ 
-                display: 'inline-block',
-                padding: '12px 24px', 
-                backgroundColor: '#007bff', 
-                color: 'white', 
-                textDecoration: 'none',
-                borderRadius: '4px',
-                fontSize: '1.1rem'
-              }}
-            >
-              Go to Dashboard
-            </Link>
-          </div>
-        ) : (
-          <div style={{ 
-            backgroundColor: '#f8f9fa', 
-            padding: '30px', 
-            borderRadius: '8px',
-            border: '1px solid #dee2e6',
-            marginBottom: '40px'
-          }}>
-            <h3 style={{ color: '#333', marginBottom: '20px' }}>Get Started</h3>
-            <p style={{ marginBottom: '20px' }}>Please login or register to start rating stores.</p>
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
-              <Link 
-                to="/login"
-                style={{ 
-                  display: 'inline-block',
-                  padding: '12px 24px', 
-                  backgroundColor: '#007bff', 
-                  color: 'white', 
-                  textDecoration: 'none',
-                  borderRadius: '4px',
-                  fontSize: '1.1rem'
-                }}
-              >
-                Login
-              </Link>
-              <Link 
-                to="/register"
-                style={{ 
-                  display: 'inline-block',
-                  padding: '12px 24px', 
-                  backgroundColor: '#28a745', 
-                  color: 'white', 
-                  textDecoration: 'none',
-                  borderRadius: '4px',
-                  fontSize: '1.1rem'
-                }}
-              >
-                Register
-              </Link>
+      <div className="home-page">
+        {/* Hero Section */}
+        <section className="hero-section">
+          <div className="container">
+            <div className="hero-content fade-in">
+              <div className="hero-text">
+                <h1 className="hero-title">
+                  Discover & Rate
+                  <br />Amazing Stores
+                </h1>
+                <p className="hero-subtitle">
+                  Join our community of reviewers and help others make informed shopping decisions. 
+                  Share your experiences and discover the best stores around you.
+                </p>
+                
+                {user ? (
+                  <div className="hero-user-section glass-card">
+                    <div className="user-welcome">
+                      <FiAward className="welcome-icon" />
+                      <div>
+                        <h3>Welcome back, {user.name}!</h3>
+                        <p>Role: <span className="user-role">{user.role.replace('_', ' ')}</span></p>
+                      </div>
+                    </div>
+                    <Link to={getDashboardUrl()} className="btn btn-primary btn-large">
+                      Go to Dashboard
+                      <FiArrowRight />
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="hero-actions">
+                    <Link to="/register" className="btn btn-primary btn-large">
+                      Get Started
+                      <FiArrowRight />
+                    </Link>
+                    <Link to="/login" className="btn btn-secondary btn-large">
+                      Sign In
+                    </Link>
+                  </div>
+                )}
+              </div>
+              
+              <div className="hero-stats">
+                <div className="stat-item glass-card slide-up">
+                  <div className="stat-number">1000+</div>
+                  <div className="stat-label">Stores Rated</div>
+                </div>
+                <div className="stat-item glass-card slide-up">
+                  <div className="stat-number">5000+</div>
+                  <div className="stat-label">Reviews</div>
+                </div>
+                <div className="stat-item glass-card slide-up">
+                  <div className="stat-number">500+</div>
+                  <div className="stat-label">Active Users</div>
+                </div>
+              </div>
             </div>
           </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="features-section">
+          <div className="container">
+            <div className="section-header fade-in">
+              <h2 className="section-title">Why Choose StoreRater?</h2>
+              <p className="section-subtitle">
+                Our platform provides everything you need to make informed shopping decisions
+                and share your experiences with the community.
+              </p>
+            </div>
+            
+            <div className="features-grid grid grid-2">
+              {features.map((feature, index) => (
+                <div key={index} className="feature-card glass-card slide-up">
+                  <div className="feature-icon">
+                    {feature.icon}
+                  </div>
+                  <div className="feature-content">
+                    <h3>{feature.title}</h3>
+                    <p>{feature.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* User Types Section */}
+        <section className="featured-section">
+          <div className="container">
+            <div className="section-header fade-in">
+              <h2 className="section-title">Built for Everyone</h2>
+              <p className="section-subtitle">
+                Whether you're a customer, store owner, or administrator,
+                our platform has features tailored for your needs.
+              </p>
+            </div>
+            
+            <div className="grid grid-3">
+              {userTypes.map((type, index) => (
+                <div key={index} className="feature-card glass-card fade-in">
+                  <div className="feature-content">
+                    <h3>{type.title}</h3>
+                    <ul className="feature-list">
+                      {type.features.map((feature, featureIndex) => (
+                        <li key={featureIndex}>{feature}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        {!user && (
+          <section className="cta-section">
+            <div className="container">
+              <div className="cta-card glass-card fade-in">
+                <h2 className="cta-title">Ready to Get Started?</h2>
+                <p className="cta-description">
+                  Join our growing community of reviewers and start sharing
+                  your store experiences today.
+                </p>
+                <div className="cta-actions">
+                  <Link to="/register" className="btn btn-primary btn-large">
+                    Create Account
+                    <FiArrowRight />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
         )}
-
-        {/* Demo Accounts */}
-        <div style={{ 
-          backgroundColor: '#fff3cd', 
-          padding: '20px', 
-          borderRadius: '8px',
-          border: '1px solid #ffeaa7',
-          marginBottom: '40px'
-        }}>
-          <h4 style={{ color: '#856404', marginBottom: '15px' }}>Demo Accounts</h4>
-          <div style={{ textAlign: 'left', display: 'inline-block' }}>
-            <p style={{ margin: '5px 0', color: '#856404' }}><strong>Admin:</strong> admin@storerating.com / Admin123!</p>
-            <p style={{ margin: '5px 0', color: '#856404' }}><strong>User:</strong> user@storerating.com / User123!</p>
-            <p style={{ margin: '5px 0', color: '#856404' }}><strong>Store Owner:</strong> storeowner@storerating.com / Store123!</p>
-          </div>
-        </div>
-
-        {/* System Features */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-          gap: '20px',
-          marginTop: '40px'
-        }}>
-          <div style={{ 
-            backgroundColor: '#fff', 
-            padding: '20px', 
-            borderRadius: '8px',
-            border: '1px solid #dee2e6'
-          }}>
-            <h4 style={{ color: '#333', marginBottom: '10px' }}>System Admin</h4>
-            <ul style={{ textAlign: 'left', color: '#666' }}>
-              <li>Manage all users</li>
-              <li>View system statistics</li>
-              <li>Add/edit stores</li>
-              <li>User role management</li>
-            </ul>
-          </div>
-          <div style={{ 
-            backgroundColor: '#fff', 
-            padding: '20px', 
-            borderRadius: '8px',
-            border: '1px solid #dee2e6'
-          }}>
-            <h4 style={{ color: '#333', marginBottom: '10px' }}>Normal User</h4>
-            <ul style={{ textAlign: 'left', color: '#666' }}>
-              <li>Rate stores (1-5 stars)</li>
-              <li>Search stores</li>
-              <li>View store ratings</li>
-              <li>Manage your ratings</li>
-            </ul>
-          </div>
-          <div style={{ 
-            backgroundColor: '#fff', 
-            padding: '20px', 
-            borderRadius: '8px',
-            border: '1px solid #dee2e6'
-          }}>
-            <h4 style={{ color: '#333', marginBottom: '10px' }}>Store Owner</h4>
-            <ul style={{ textAlign: 'left', color: '#666' }}>
-              <li>View store analytics</li>
-              <li>See customer ratings</li>
-              <li>Monitor store performance</li>
-              <li>View rating statistics</li>
-            </ul>
-          </div>
-        </div>
-        </div>
       </div>
     </>
   );

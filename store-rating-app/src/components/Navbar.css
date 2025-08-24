@@ -5,7 +5,7 @@
   right: 0;
   z-index: 1000;
   padding: 0;
-  margin: 16px;
+  margin: 0 16px 16px;
   border-radius: var(--border-radius);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -258,7 +258,7 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .navbar {
-    margin: 8px;
+    margin: 0 8px 8px;
   }
   
   .navbar-content {
@@ -292,7 +292,7 @@
 
 @media (max-width: 480px) {
   .navbar {
-    margin: 4px;
+    margin: 0 4px 4px;
   }
   
   .navbar-content {
