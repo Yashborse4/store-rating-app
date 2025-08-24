@@ -10,8 +10,6 @@ A complete authentication and user management system built with Node.js, Express
 - 🛡️ **Password Security** - Bcrypt password hashing
 - 📝 **Input Validation** - Comprehensive request validation
 - 🗄️ **PostgreSQL Database** - Robust relational database
-- 🚦 **Error Handling** - Detailed error responses
-- 📊 **Health Checks** - System monitoring endpoints
 
 ## User Roles
 
@@ -284,35 +282,3 @@ backend/
 - `npm run dev` - Start development server with auto-restart
 - `npm run seed` - Seed database with sample users
 
-### Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## Troubleshooting
-
-### Database Connection Issues
-- Ensure PostgreSQL is running
-- Verify database credentials in `.env`
-- Check if the database exists
-
-### Authentication Problems
-- Verify JWT_SECRET is set in `.env`
-- Check token format in Authorization header
-- Ensure token hasn't expired
-
-### Permission Errors
-- Verify user role in the database
-- Check if user account is active
-- Confirm endpoint requires correct permissions
-
-## License
-
-This project is licensed under the ISC License.
-
-## Support
-
-For support and questions, please contact the development team or create an issue in the repository.
