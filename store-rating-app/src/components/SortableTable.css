@@ -1,0 +1,287 @@
+.sortable-table-container {
+  width: 100%;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Filter controls */
+.table-filters {
+  padding: 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 200px;
+}
+
+.filter-group label {
+  font-weight: 500;
+  font-size: 14px;
+  color: #495057;
+}
+
+.filter-input {
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.filter-input:focus {
+  border-color: #007bff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Table wrapper for horizontal scrolling */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+/* Table styles */
+.sortable-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+/* Table header */
+.table-header {
+  background: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  padding: 12px 15px;
+  font-weight: 600;
+  color: #495057;
+  text-align: left;
+  position: relative;
+}
+
+.table-header.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.table-header.sortable:hover {
+  background-color: #e9ecef;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sort-icon {
+  font-size: 12px;
+  color: #6c757d;
+  opacity: 0.7;
+  transition: opacity 0.15s ease-in-out;
+}
+
+.table-header.sortable:hover .sort-icon {
+  opacity: 1;
+}
+
+/* Table rows */
+.table-row {
+  border-bottom: 1px solid #dee2e6;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.table-row:hover {
+  background-color: #f8f9fa;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+/* Table cells */
+.table-cell {
+  padding: 12px 15px;
+  vertical-align: middle;
+  word-wrap: break-word;
+}
+
+/* Empty message */
+.empty-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+  font-style: italic;
+  background-color: #f8f9fa;
+}
+
+/* Table footer */
+.table-footer {
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.row-count {
+  font-size: 14px;
+  color: #6c757d;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-badge.active {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.inactive {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Rating stars */
+.rating-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.star {
+  color: #ffc107;
+  font-size: 16px;
+}
+
+.star.empty {
+  color: #e9ecef;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #1e7e34;
+}
+
+.btn-warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.btn-warning:hover {
+  background-color: #e0a800;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid #ced4da;
+  color: #495057;
+}
+
+.btn-outline:hover {
+  background-color: #e9ecef;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .table-filters {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .filter-group {
+    min-width: 100%;
+  }
+  
+  .sortable-table {
+    font-size: 12px;
+  }
+  
+  .table-header,
+  .table-cell {
+    padding: 8px 10px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .btn-sm {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-filters {
+    padding: 15px;
+  }
+  
+  .table-footer {
+    padding: 10px 15px;
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+}
