@@ -39,6 +39,20 @@ router.get('/profile', authenticateToken, authController.getProfile);
 router.get('/dashboard', authenticateToken, authController.getDashboard);
 
 /**
+ * @route   POST /api/auth/refresh
+ * @desc    Refresh JWT token using refresh token
+ * @access  Public
+ */
+router.post('/refresh', authController.refreshToken);
+
+/**
+ * @route   GET /api/auth/validate
+ * @desc    Validate current session and return user data
+ * @access  Private
+ */
+router.get('/validate', authenticateToken, authController.validateSession);
+
+/**
  * @route   GET /api/auth/roles
  * @desc    Get available roles (for registration form)
  * @access  Public

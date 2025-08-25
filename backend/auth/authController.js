@@ -263,6 +263,105 @@ const getDashboard = async (req, res) => {
 };
 
 /**
+ * Refresh JWT token
+ */
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token is required.',
+        error: 'MISSING_REFRESH_TOKEN'
+      });
+    }
+
+    // Verify refresh token
+    const { verifyToken, generateToken, generateRefreshToken } = require('../utils/jwt');
+    const decoded = verifyToken(refreshToken);
+    
+    // Find user to ensure they still exist and are active
+    const user = await User.findById(decoded.userId);
+    if (!user || !user.is_active) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token or user not found.',
+        error: 'INVALID_REFRESH_TOKEN'
+      });
+    }
+
+    // Generate new tokens
+    const tokenPayload = {
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    };
+
+    const newToken = generateToken(tokenPayload);
+    const newRefreshToken = generateRefreshToken(tokenPayload);
+
+    res.status(200).json({
+      success: true,
+      message: 'Token refreshed successfully.',
+      data: {
+        token: newToken,
+        refreshToken: newRefreshToken,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          address: user.address
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(401).json({
+      success: false,
+      message: 'Invalid or expired refresh token.',
+      error: 'INVALID_REFRESH_TOKEN'
+    });
+  }
+};
+
+/**
+ * Validate current session
+ */
+const validateSession = async (req, res) => {
+  try {
+    // User is already validated by authenticateToken middleware
+    const user = req.user;
+    
+    res.status(200).json({
+      success: true,
+      message: 'Session is valid.',
+      data: {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          address: user.address
+        },
+        isAuthenticated: true
+      }
+    });
+
+  } catch (error) {
+    console.error('Validate session error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error.',
+      error: 'INTERNAL_ERROR'
+    });
+  }
+};
+
+/**
  * Get available roles (for registration form)
  */
 const getRoles = async (req, res) => {
@@ -297,5 +396,7 @@ module.exports = {
   getProfile,
   logout,
   getDashboard,
+  refreshToken,
+  validateSession,
   getRoles
 };

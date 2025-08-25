@@ -165,24 +165,39 @@ const AdminDashboard = () => {
     }
   };
 
-  // Filter users
-  const filteredUsers = users.filter(user => {
+  // Filter users - ensure users is an array before filtering
+  const filteredUsers = Array.isArray(users) ? users.filter(user => {
     return (
       user.name.toLowerCase().includes(userFilters.name.toLowerCase()) &&
       user.email.toLowerCase().includes(userFilters.email.toLowerCase()) &&
       user.address.toLowerCase().includes(userFilters.address.toLowerCase()) &&
       (userFilters.role === '' || user.role === userFilters.role)
     );
-  });
+  }) : [];
 
-  // Filter stores
-  const filteredStores = stores.filter(store => {
+  // Filter stores - ensure stores is an array before filtering
+  const filteredStores = Array.isArray(stores) ? stores.filter(store => {
     return (
       store.name.toLowerCase().includes(storeFilters.name.toLowerCase()) &&
       store.email.toLowerCase().includes(storeFilters.email.toLowerCase()) &&
       store.address.toLowerCase().includes(storeFilters.address.toLowerCase())
     );
-  });
+  }) : [];
+
+  // Show loading screen while initial data is being fetched
+  if (loading && users.length === 0 && stores.length === 0) {
+    return (
+      <div className="admin-dashboard">
+        <div className="container">
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <h2>Loading Dashboard...</h2>
+            <p>Please wait while we fetch the data.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-dashboard">

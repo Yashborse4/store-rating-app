@@ -47,6 +47,9 @@ export const authAPI = {
       const response = await api.post('/api/auth/register', userData);
       if (response.data.success && response.data.data.token) {
         localStorage.setItem('authToken', response.data.data.token);
+        if (response.data.data.refreshToken) {
+          localStorage.setItem('refreshToken', response.data.data.refreshToken);
+        }
         localStorage.setItem('currentUser', JSON.stringify(response.data.data.user));
       }
       return response.data;
@@ -61,6 +64,9 @@ export const authAPI = {
       const response = await api.post('/api/auth/login', { email, password });
       if (response.data.success && response.data.data.token) {
         localStorage.setItem('authToken', response.data.data.token);
+        if (response.data.data.refreshToken) {
+          localStorage.setItem('refreshToken', response.data.data.refreshToken);
+        }
         localStorage.setItem('currentUser', JSON.stringify(response.data.data.user));
       }
       return response.data;
@@ -101,6 +107,31 @@ export const authAPI = {
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to get dashboard');
+    }
+  },
+
+  // Refresh JWT token
+  refreshToken: async (refreshToken) => {
+    try {
+      const response = await api.post('/api/auth/refresh', { refreshToken });
+      if (response.data.success && response.data.data.token) {
+        localStorage.setItem('authToken', response.data.data.token);
+        localStorage.setItem('refreshToken', response.data.data.refreshToken);
+        localStorage.setItem('currentUser', JSON.stringify(response.data.data.user));
+      }
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Token refresh failed');
+    }
+  },
+
+  // Validate current session
+  validateSession: async () => {
+    try {
+      const response = await api.get('/api/auth/validate');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Session validation failed');
     }
   },
 

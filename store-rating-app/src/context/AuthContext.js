@@ -11,50 +11,128 @@ export const useAuth = () => {
   return context;
 };
 
+// Role-based route mappings
+const getRoleBasedRoute = (role) => {
+  const roleRoutes = {
+    'system_admin': '/admin',
+    'normal_user': '/dashboard', 
+    'store_owner': '/store-dashboard'
+  };
+  return roleRoutes[role] || '/dashboard';
+};
+
+// Check if current path requires authentication
+const isAuthRequiredPath = (pathname) => {
+  const publicPaths = ['/', '/login', '/register', '/signup', '/universal-login'];
+  return !publicPaths.includes(pathname);
+};
+
+// Check if user should be redirected away from auth pages when already logged in
+const isAuthPage = (pathname) => {
+  const authPages = ['/login', '/register', '/signup', '/universal-login'];
+  return authPages.includes(pathname);
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // Initialize authentication status on app load
   useEffect(() => {
-    // Check if user is logged in on app start
-    const checkAuthStatus = async () => {
+    const initializeAuth = async () => {
       const authToken = localStorage.getItem('authToken');
       
       if (authToken) {
         try {
-          // Validate token with backend
-          const response = await authAPI.getProfile();
-          if (response.success) {
-          const userData = {
-            id: response.data.user.id,
-            email: response.data.user.email,
-            name: response.data.user.name,
-            role: response.data.user.role,
-            address: response.data.user.address
-          };
+          // Validate existing token
+          const response = await authAPI.validateSession();
+          
+          if (response.success && response.data.user) {
+            const userData = {
+              id: response.data.user.id,
+              email: response.data.user.email,
+              name: response.data.user.name,
+              role: response.data.user.role,
+              address: response.data.user.address
+            };
             setUser(userData);
+            
+            // Auto-redirect if on auth page and user is authenticated
+            const currentPath = window.location.pathname;
+            if (isAuthPage(currentPath)) {
+              const redirectTo = getRoleBasedRoute(userData.role);
+              window.history.replaceState(null, '', redirectTo);
+            }
           } else {
-            // Invalid token, clear storage
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('authToken');
+            // Invalid session, clear storage
+            clearAuthData();
           }
         } catch (error) {
-          // Token validation failed, clear storage
-          localStorage.removeItem('currentUser');
-          localStorage.removeItem('authToken');
-          console.error('Auth validation error:', error.message);
+          console.error('Session validation failed:', error.message);
+          
+          // Try to refresh token if available
+          const refreshToken = localStorage.getItem('refreshToken');
+          if (refreshToken) {
+            try {
+              const refreshResponse = await authAPI.refreshToken(refreshToken);
+              if (refreshResponse.success && refreshResponse.data.user) {
+                const userData = {
+                  id: refreshResponse.data.user.id,
+                  email: refreshResponse.data.user.email,
+                  name: refreshResponse.data.user.name,
+                  role: refreshResponse.data.user.role,
+                  address: refreshResponse.data.user.address
+                };
+                setUser(userData);
+                
+                // Auto-redirect if on auth page
+                const currentPath = window.location.pathname;
+                if (isAuthPage(currentPath)) {
+                  const redirectTo = getRoleBasedRoute(userData.role);
+                  window.history.replaceState(null, '', redirectTo);
+                }
+              } else {
+                clearAuthData();
+              }
+            } catch (refreshError) {
+              console.error('Token refresh failed:', refreshError.message);
+              clearAuthData();
+            }
+          } else {
+            clearAuthData();
+          }
+        }
+      } else {
+        // No token found, redirect to login if on protected page
+        const currentPath = window.location.pathname;
+        if (isAuthRequiredPath(currentPath)) {
+          window.history.replaceState(null, '', '/login');
         }
       }
+      
       setLoading(false);
+      setIsInitialized(true);
     };
     
-    checkAuthStatus();
+    initializeAuth();
   }, []);
 
-  const login = async (email, password) => {
+  // Clear authentication data
+  const clearAuthData = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('currentUser');
+    setUser(null);
+  };
+
+  // Login function with automatic redirection
+  const login = async (email, password, redirectTo = null) => {
     try {
+      setLoading(true);
       const response = await authAPI.login(email, password);
-      if (response.success) {
+      
+      if (response.success && response.data.user) {
         const userData = {
           id: response.data.user.id,
           email: response.data.user.email,
@@ -62,28 +140,48 @@ export const AuthProvider = ({ children }) => {
           role: response.data.user.role,
           address: response.data.user.address
         };
+        
+        // Store refresh token if provided
+        if (response.data.refreshToken) {
+          localStorage.setItem('refreshToken', response.data.refreshToken);
+        }
+        
         setUser(userData);
+        
+        // Determine redirect destination
+        const destination = redirectTo || getRoleBasedRoute(userData.role);
+        
+        // Use timeout to ensure state is updated before navigation
+        setTimeout(() => {
+          window.location.href = destination;
+        }, 100);
+        
         return userData;
       }
+      
       throw new Error(response.message || 'Login failed');
     } catch (error) {
       throw new Error(error.message || 'Login failed');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const register = async (userData) => {
+  // Registration function with automatic redirection
+  const register = async (userData, redirectTo = null) => {
     try {
-      // Prepare data for backend API
+      setLoading(true);
       const registrationData = {
         name: userData.name,
         email: userData.email,
         password: userData.password,
-        role: 'normal_user', // Default to normal user
-        address: userData.address
+        role: userData.role || 'normal_user',
+        address: userData.address || ''
       };
       
       const response = await authAPI.register(registrationData);
-      if (response.success) {
+      
+      if (response.success && response.data.user) {
         const newUser = {
           id: response.data.user.id,
           email: response.data.user.email,
@@ -91,12 +189,30 @@ export const AuthProvider = ({ children }) => {
           role: response.data.user.role,
           address: response.data.user.address
         };
+        
+        // Store refresh token if provided
+        if (response.data.refreshToken) {
+          localStorage.setItem('refreshToken', response.data.refreshToken);
+        }
+        
         setUser(newUser);
+        
+        // Determine redirect destination
+        const destination = redirectTo || getRoleBasedRoute(newUser.role);
+        
+        // Use timeout to ensure state is updated before navigation
+        setTimeout(() => {
+          window.location.href = destination;
+        }, 100);
+        
         return newUser;
       }
+      
       throw new Error(response.message || 'Registration failed');
     } catch (error) {
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -228,32 +344,62 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Logout function with redirection
   const logout = async () => {
     try {
       await authAPI.logout();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      setUser(null);
-      localStorage.removeItem('currentUser');
+      clearAuthData();
+      window.location.href = '/login';
     }
   };
 
+  // Get user's appropriate dashboard route
+  const getDashboardRoute = () => {
+    return user ? getRoleBasedRoute(user.role) : '/login';
+  };
+
+  // Check if user has specific role
+  const hasRole = (role) => {
+    return user?.role === role;
+  };
+
+  // Check if user is authenticated
+  const isAuthenticated = () => {
+    return !!user && !!localStorage.getItem('authToken');
+  };
+
   const value = {
+    // State
     user,
+    loading,
+    isInitialized,
+    
+    // Authentication methods
     login,
     register,
+    logout,
+    
+    // Utility methods
+    isAuthenticated,
+    hasRole,
+    getDashboardRoute,
+    
+    // User management
     addUser,
-    updatePassword,
     getAllUsers,
     getUserById,
+    
+    // Store management
     getAllStores,
     getStoreRatings,
     getUserRating,
     submitRating,
-    getDashboardStats,
-    logout,
-    loading
+    
+    // Admin methods
+    getDashboardStats
   };
 
   return (
