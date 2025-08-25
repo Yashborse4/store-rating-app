@@ -162,11 +162,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Get all stores
+  // Get all stores (role-based access)
   const getAllStores = async (filters = {}) => {
     try {
-      const response = await storeAPI.getAllStores(filters);
-      return response.data;
+      // Admin users get full store management access
+      if (user?.role === 'system_admin') {
+        const response = await storeAPI.getAllStores(filters);
+        return response.data;
+      } else {
+        // Normal users and store owners get stores with user rating context
+        const response = await storeAPI.getStoresWithUserRating(filters);
+        return response.data;
+      }
     } catch (error) {
       throw new Error(error.message || 'Failed to get stores');
     }
