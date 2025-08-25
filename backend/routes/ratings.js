@@ -5,7 +5,7 @@ const {
   authenticateToken, 
   requireNormalUser,
   requireStoreOwnerOrAdmin
-} = require('../middleware/auth');
+} = require('../auth');
 
 /**
  * @route   POST /api/ratings

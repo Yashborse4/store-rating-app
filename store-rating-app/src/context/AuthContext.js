@@ -25,16 +25,13 @@ export const AuthProvider = ({ children }) => {
           // Validate token with backend
           const response = await authAPI.getProfile();
           if (response.success) {
-            const userData = {
-              id: response.data.user.id,
-              email: response.data.user.email,
-              username: response.data.user.username,
-              name: `${response.data.user.first_name} ${response.data.user.last_name}`.trim(),
-              role: response.data.user.role_name,
-              first_name: response.data.user.first_name,
-              last_name: response.data.user.last_name,
-              address: response.data.user.address
-            };
+          const userData = {
+            id: response.data.user.id,
+            email: response.data.user.email,
+            name: response.data.user.name,
+            role: response.data.user.role,
+            address: response.data.user.address
+          };
             setUser(userData);
           } else {
             // Invalid token, clear storage
@@ -61,11 +58,8 @@ export const AuthProvider = ({ children }) => {
         const userData = {
           id: response.data.user.id,
           email: response.data.user.email,
-          username: response.data.user.username,
-          name: `${response.data.user.first_name} ${response.data.user.last_name}`.trim(),
-          role: response.data.user.role_name,
-          first_name: response.data.user.first_name,
-          last_name: response.data.user.last_name,
+          name: response.data.user.name,
+          role: response.data.user.role,
           address: response.data.user.address
         };
         setUser(userData);
@@ -81,12 +75,10 @@ export const AuthProvider = ({ children }) => {
     try {
       // Prepare data for backend API
       const registrationData = {
-        username: userData.name.replace(/\s+/g, '_').toLowerCase(),
+        name: userData.name,
         email: userData.email,
         password: userData.password,
-        role_name: 'normal_user', // Default to normal user
-        first_name: userData.name.split(' ')[0] || '',
-        last_name: userData.name.split(' ').slice(1).join(' ') || '',
+        role: 'normal_user', // Default to normal user
         address: userData.address
       };
       
@@ -95,11 +87,8 @@ export const AuthProvider = ({ children }) => {
         const newUser = {
           id: response.data.user.id,
           email: response.data.user.email,
-          username: response.data.user.username,
-          name: `${response.data.user.first_name} ${response.data.user.last_name}`.trim(),
-          role: response.data.user.role_name,
-          first_name: response.data.user.first_name,
-          last_name: response.data.user.last_name,
+          name: response.data.user.name,
+          role: response.data.user.role,
           address: response.data.user.address
         };
         setUser(newUser);
@@ -115,12 +104,10 @@ export const AuthProvider = ({ children }) => {
   const addUser = async (userData) => {
     try {
       const registrationData = {
-        username: userData.name.replace(/\s+/g, '_').toLowerCase(),
+        name: userData.name,
         email: userData.email,
         password: userData.password,
-        role_name: userData.role,
-        first_name: userData.name.split(' ')[0] || '',
-        last_name: userData.name.split(' ').slice(1).join(' ') || '',
+        role: userData.role,
         address: userData.address
       };
       
@@ -129,8 +116,8 @@ export const AuthProvider = ({ children }) => {
         return {
           id: response.data.user.id,
           email: response.data.user.email,
-          name: `${response.data.user.first_name} ${response.data.user.last_name}`.trim(),
-          role: response.data.user.role_name,
+          name: response.data.user.name,
+          role: response.data.user.role,
           address: response.data.user.address
         };
       }

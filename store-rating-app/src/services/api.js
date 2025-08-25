@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000',
+  baseURL: 'http://localhost:9006',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -140,7 +140,7 @@ export const userAPI = {
   // Update user status (Admin only)
   updateUserStatus: async (userId, isActive) => {
     try {
-      const response = await api.put(`/api/users/${userId}/status`, { is_active: isActive });
+      const response = await api.patch(`/api/users/${userId}/status`, { is_active: isActive });
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to update user status');
@@ -181,7 +181,7 @@ export const storeAPI = {
       Object.keys(filters).forEach(key => {
         if (filters[key]) params.append(key, filters[key]);
       });
-      const response = await api.get(`/api/stores/user-ratings?${params.toString()}`);
+      const response = await api.get(`/api/stores/list?${params.toString()}`);
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to get stores with ratings');

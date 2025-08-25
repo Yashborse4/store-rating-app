@@ -6,13 +6,13 @@ const morgan = require('morgan');
 require('dotenv').config();
 
 const { initializeDatabase } = require('./config/database');
-const authRoutes = require('./routes/auth');
+const auth = require('./auth'); // Consolidated auth module
 const userRoutes = require('./routes/users');
 const storeRoutes = require('./routes/stores');
 const ratingRoutes = require('./routes/ratings');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 9006; // Hardcoded port for this application
 
 // Security middleware
 app.use(helmet({
@@ -51,7 +51,7 @@ if (process.env.NODE_ENV === 'production') {
 // CORS Configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS 
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3001', 'http://localhost:3000'];
+  : ['http://localhost:9005', 'http://localhost:3001', 'http://localhost:3000'];
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -96,7 +96,7 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', auth.routes);
 app.use('/api/users', userRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/ratings', ratingRoutes);

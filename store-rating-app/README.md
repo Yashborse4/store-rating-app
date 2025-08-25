@@ -45,7 +45,7 @@ A modern, full-featured store rating platform built with React and Node.js. Rate
    cp .env.development .env.local
    
    # Update the API URL in .env.local
-   REACT_APP_API_URL=http://localhost:3001
+   REACT_APP_API_URL=http://localhost:3002
    ```
 
 4. **Start the development server**
@@ -92,25 +92,13 @@ store-rating-app/
 
 #### Development (`.env.development`)
 ```env
-REACT_APP_API_URL=http://localhost:3001
+REACT_APP_API_URL=http://localhost:3002
 REACT_APP_ENVIRONMENT=development
 REACT_APP_ENABLE_DEBUG_MODE=true
 ```
 
-#### Production (`.env.production`)
-```env
-REACT_APP_API_URL=https://api.yourdomain.com
-REACT_APP_ENVIRONMENT=production
-REACT_APP_ENABLE_DEBUG_MODE=false
-GENERATE_SOURCEMAP=false
-```
 
-## 📱 Responsive Design
 
-The application is fully responsive and optimized for:
-- **Desktop** (1200px+) - Full layout with sidebar navigation
-- **Tablet** (768px-1199px) - Adapted layout with collapsible elements
-- **Mobile** (320px-767px) - Mobile-first design with touch-friendly interactions
 
 
 
