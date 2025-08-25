@@ -53,22 +53,63 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
   : ['http://localhost:9005', 'http://localhost:3001', 'http://localhost:3000'];
 
-app.use(cors({
+console.log('🌐 Allowed CORS origins:', allowedOrigins);
+
+// CORS Configuration - Unified for both development and production
+const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    console.log('🔍 CORS check for origin:', origin);
     
+    // Allow requests with no origin (like mobile apps, Postman, or curl requests)
+    if (!origin) {
+      console.log('✅ Allowing request with no origin');
+      return callback(null, true);
+    }
+    
+    // Check if origin is in allowed list
     if (allowedOrigins.indexOf(origin) !== -1) {
+      console.log('✅ Origin allowed:', origin);
       callback(null, true);
     } else {
+      console.log('❌ Origin not allowed:', origin);
+      console.log('📝 Allowed origins:', allowedOrigins);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With', 
+    'Accept',
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
+  ],
   credentials: true,
-  optionsSuccessStatus: 200 // For legacy browser support
-}));
+  optionsSuccessStatus: 200, // For legacy browser support
+  preflightContinue: false // Pass control to next handler
+};
+
+app.use(cors(corsOptions));
+console.log('🌐 CORS configured for origins:', allowedOrigins);
+console.log('🛠️  Environment:', process.env.NODE_ENV);
+
+// Additional explicit preflight handling
+app.options('*', (req, res) => {
+  console.log('🔄 Handling preflight OPTIONS request for:', req.path);
+  console.log('📧 Origin:', req.headers.origin);
+  console.log('📋 Access-Control-Request-Method:', req.headers['access-control-request-method']);
+  console.log('🏷️  Access-Control-Request-Headers:', req.headers['access-control-request-headers']);
+  
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  
+  res.sendStatus(200);
+});
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));

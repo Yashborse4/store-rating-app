@@ -372,6 +372,73 @@ const validateStoreData = (storeData) => {
   };
 };
 
+/**
+ * Simple user registration validation for frontend compatibility
+ * Accepts name, email, password format
+ */
+const validateSimpleUserRegistration = (userData) => {
+  const { name, email, password, address } = userData;
+  const errors = [];
+  const validatedData = {};
+  
+  // Validate email
+  const emailValidation = validateEmail(email);
+  if (!emailValidation.isValid) {
+    errors.push(...emailValidation.errors);
+  } else {
+    validatedData.email = emailValidation.value;
+  }
+  
+  // Validate password
+  const passwordValidation = validatePassword(password);
+  if (!passwordValidation.isValid) {
+    errors.push(...passwordValidation.errors);
+  } else {
+    validatedData.password = passwordValidation.value;
+  }
+  
+  // Validate full name (simple version - must be 20-60 characters)
+  if (!name || typeof name !== 'string') {
+    errors.push('Name is required');
+  } else {
+    const trimmedName = name.trim();
+    if (trimmedName.length < 20) {
+      errors.push('Name must be at least 20 characters long');
+    } else if (trimmedName.length > 60) {
+      errors.push('Name must not exceed 60 characters');
+    } else {
+      // Check for valid characters
+      const nameRegex = /^[a-zA-Z\s'-]+$/;
+      if (!nameRegex.test(trimmedName)) {
+        errors.push('Name can only contain letters, spaces, hyphens, and apostrophes');
+      } else {
+        validatedData.name = trimmedName;
+      }
+    }
+  }
+  
+  // Validate address if provided
+  if (address) {
+    const addressValidation = validateAddress(address);
+    if (!addressValidation.isValid) {
+      errors.push(...addressValidation.errors);
+    } else {
+      validatedData.address = addressValidation.value;
+    }
+  } else {
+    validatedData.address = ''; // Default empty address
+  }
+  
+  // Set default role
+  validatedData.role = 'normal_user';
+  
+  return {
+    isValid: errors.length === 0,
+    errors,
+    data: validatedData
+  };
+};
+
 module.exports = {
   validateName,
   validateFullName,
@@ -382,5 +449,6 @@ module.exports = {
   validateStoreName,
   validateRating,
   validateUserRegistration,
+  validateSimpleUserRegistration,
   validateStoreData
 };

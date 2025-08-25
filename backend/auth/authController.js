@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const { generateToken, generateRefreshToken, getRoleRedirectUrl } = require('../utils/jwt');
-const { validateUserRegistration, validatePassword } = require('../utils/validation');
+const { validateSimpleUserRegistration, validatePassword } = require('../utils/validation');
 
 /**
  * User Registration
@@ -9,8 +9,8 @@ const register = async (req, res) => {
   try {
     const userData = req.body;
 
-    // Comprehensive validation using validation utility
-    const validation = validateUserRegistration(userData);
+    // Simple validation for frontend compatibility
+    const validation = validateSimpleUserRegistration(userData);
     if (!validation.isValid) {
       return res.status(400).json({
         success: false,
@@ -20,7 +20,7 @@ const register = async (req, res) => {
       });
     }
 
-    const { name, email, password, role = 'normal_user', address } = validation.data;
+    const { name, email, password, address, role } = validation.data;
 
     // Check if user already exists
     const existingUserByEmail = await User.findByEmail(email);
