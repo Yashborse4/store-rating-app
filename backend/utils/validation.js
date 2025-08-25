@@ -68,7 +68,7 @@ const validateAddress = (address) => {
 
 /**
  * Validate password
- * Must be 8-16 characters with at least one uppercase letter and one special character
+ * Must be at least 6 characters (simplified for better user experience)
  */
 const validatePassword = (password) => {
   const errors = [];
@@ -78,23 +78,12 @@ const validatePassword = (password) => {
     return { isValid: false, errors };
   }
   
-  if (password.length < 8) {
-    errors.push('Password must be at least 8 characters long');
+  if (password.length < 6) {
+    errors.push('Password must be at least 6 characters long');
   }
   
-  if (password.length > 16) {
-    errors.push('Password must not exceed 16 characters');
-  }
-  
-  // Check for at least one uppercase letter
-  if (!/[A-Z]/.test(password)) {
-    errors.push('Password must contain at least one uppercase letter');
-  }
-  
-  // Check for at least one special character
-  const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
-  if (!specialCharRegex.test(password)) {
-    errors.push('Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':"\\|,.<>?/)');
+  if (password.length > 50) {
+    errors.push('Password must not exceed 50 characters');
   }
   
   return {
@@ -397,13 +386,13 @@ const validateSimpleUserRegistration = (userData) => {
     validatedData.password = passwordValidation.value;
   }
   
-  // Validate full name (simple version - must be 20-60 characters)
+  // Validate full name (updated for better user experience - 2-60 characters)
   if (!name || typeof name !== 'string') {
     errors.push('Name is required');
   } else {
     const trimmedName = name.trim();
-    if (trimmedName.length < 20) {
-      errors.push('Name must be at least 20 characters long');
+    if (trimmedName.length < 2) {
+      errors.push('Name must be at least 2 characters long');
     } else if (trimmedName.length > 60) {
       errors.push('Name must not exceed 60 characters');
     } else {
