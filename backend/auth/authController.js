@@ -1,5 +1,11 @@
 const User = require('../models/User');
-const { generateToken, generateRefreshToken, getRoleRedirectUrl } = require('../utils/jwt');
+const { 
+  generateTokenPair, 
+  getRoleRedirectUrl, 
+  verifyRefreshToken,
+  blacklistToken,
+  extractToken
+} = require('../utils/jwt');
 const { validateSimpleUserRegistration, validatePassword } = require('../utils/validation');
 
 /**
@@ -59,8 +65,7 @@ const register = async (req, res) => {
       role: role
     };
 
-    const token = generateToken(tokenPayload);
-    const refreshToken = generateRefreshToken(tokenPayload);
+    const tokens = generateTokenPair(tokenPayload);
 
     res.status(201).json({
       success: true,
@@ -73,8 +78,9 @@ const register = async (req, res) => {
           role: role,
           address: newUser.address
         },
-        token,
-        refreshToken,
+        token: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresIn: tokens.expiresIn,
         redirectUrl: getRoleRedirectUrl(role)
       }
     });
@@ -142,8 +148,7 @@ const login = async (req, res) => {
       role: user.role
     };
 
-    const token = generateToken(tokenPayload);
-    const refreshToken = generateRefreshToken(tokenPayload);
+    const tokens = generateTokenPair(tokenPayload);
 
     res.status(200).json({
       success: true,
@@ -156,8 +161,9 @@ const login = async (req, res) => {
           role: user.role,
           address: user.address
         },
-        token,
-        refreshToken,
+        token: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresIn: tokens.expiresIn,
         redirectUrl: getRoleRedirectUrl(user.role)
       }
     });
@@ -204,18 +210,28 @@ const getProfile = async (req, res) => {
 };
 
 /**
- * Logout (client-side token removal)
+ * Logout with token blacklisting
  */
 const logout = async (req, res) => {
   try {
-    // In a JWT-based system, logout is typically handled on the client side
-    // by removing the token from storage. We can log this action for audit purposes.
+    // Get tokens from request
+    const accessToken = extractToken(req.headers.authorization);
+    const { refreshToken } = req.body;
+    
+    // Blacklist both tokens
+    if (accessToken) {
+      blacklistToken(accessToken, 'access');
+    }
+    
+    if (refreshToken) {
+      blacklistToken(refreshToken, 'refresh');
+    }
     
     res.status(200).json({
       success: true,
       message: 'Logout successful.',
       data: {
-        message: 'Please remove the token from client storage.'
+        message: 'Tokens have been invalidated. Please remove them from client storage.'
       }
     });
 
@@ -263,13 +279,13 @@ const getDashboard = async (req, res) => {
 };
 
 /**
- * Refresh JWT token
+ * Refresh JWT token with rotation
  */
 const refreshToken = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const { refreshToken: token } = req.body;
     
-    if (!refreshToken) {
+    if (!token) {
       return res.status(400).json({
         success: false,
         message: 'Refresh token is required.',
@@ -278,8 +294,7 @@ const refreshToken = async (req, res) => {
     }
 
     // Verify refresh token
-    const { verifyToken, generateToken, generateRefreshToken } = require('../utils/jwt');
-    const decoded = verifyToken(refreshToken);
+    const decoded = verifyRefreshToken(token);
     
     // Find user to ensure they still exist and are active
     const user = await User.findById(decoded.userId);
@@ -291,7 +306,10 @@ const refreshToken = async (req, res) => {
       });
     }
 
-    // Generate new tokens
+    // Blacklist old refresh token (rotation)
+    blacklistToken(token, 'refresh');
+
+    // Generate new token pair
     const tokenPayload = {
       userId: user.id,
       name: user.name,
@@ -299,15 +317,15 @@ const refreshToken = async (req, res) => {
       role: user.role
     };
 
-    const newToken = generateToken(tokenPayload);
-    const newRefreshToken = generateRefreshToken(tokenPayload);
+    const tokens = generateTokenPair(tokenPayload);
 
     res.status(200).json({
       success: true,
       message: 'Token refreshed successfully.',
       data: {
-        token: newToken,
-        refreshToken: newRefreshToken,
+        token: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresIn: tokens.expiresIn,
         user: {
           id: user.id,
           name: user.name,
@@ -320,10 +338,19 @@ const refreshToken = async (req, res) => {
 
   } catch (error) {
     console.error('Refresh token error:', error);
-    res.status(401).json({
+    
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired refresh token.',
+        error: 'INVALID_REFRESH_TOKEN'
+      });
+    }
+    
+    res.status(500).json({
       success: false,
-      message: 'Invalid or expired refresh token.',
-      error: 'INVALID_REFRESH_TOKEN'
+      message: 'Internal server error during token refresh.',
+      error: 'INTERNAL_ERROR'
     });
   }
 };

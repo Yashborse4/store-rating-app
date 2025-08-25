@@ -10,6 +10,7 @@ const auth = require('./auth'); // Consolidated auth module
 const userRoutes = require('./routes/users');
 const storeRoutes = require('./routes/stores');
 const ratingRoutes = require('./routes/ratings');
+const dashboardRoutes = require('./routes/dashboard');
 
 const app = express();
 const PORT = 9006; // Hardcoded port for this application
@@ -141,6 +142,7 @@ app.use('/api/auth', auth.routes);
 app.use('/api/users', userRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/ratings', ratingRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Root route
 app.get('/', (req, res) => {

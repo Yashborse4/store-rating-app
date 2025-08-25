@@ -303,6 +303,32 @@ export const ratingAPI = {
   }
 };
 
+// Dashboard API endpoints
+export const dashboardAPI = {
+  // Get dashboard statistics based on user role
+  getStats: async () => {
+    try {
+      const response = await api.get('/api/dashboard/stats');
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to get dashboard statistics');
+    }
+  },
+
+  // Get role-specific dashboard data
+  getDashboardData: async () => {
+    try {
+      const response = await api.get('/api/dashboard/stats');
+      if (response.data.success) {
+        return response.data.data;
+      }
+      throw new Error(response.data.message || 'Failed to get dashboard data');
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to get dashboard data');
+    }
+  }
+};
+
 // System API endpoints
 export const systemAPI = {
   // Health check

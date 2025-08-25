@@ -1,4 +1,9 @@
-const { verifyToken, extractToken } = require('../utils/jwt');
+const { 
+  verifyToken, 
+  extractToken, 
+  isTokenBlacklisted,
+  isTokenExpired 
+} = require('../utils/jwt');
 const User = require('../models/User');
 
 /**
@@ -16,8 +21,26 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
+    // Check if token is blacklisted
+    if (isTokenBlacklisted(token)) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token has been invalidated.',
+        error: 'TOKEN_BLACKLISTED'
+      });
+    }
+
     // Verify token
     const decoded = verifyToken(token);
+    
+    // Ensure it's not a refresh token being used as access token
+    if (decoded.type === 'refresh') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token type. Use access token for API requests.',
+        error: 'INVALID_TOKEN_TYPE'
+      });
+    }
     
     // Get user from database to ensure they still exist and are active
     const user = await User.findById(decoded.userId);
@@ -46,6 +69,10 @@ const authenticateToken = async (req, res, next) => {
       role: user.role,
       address: user.address
     };
+    
+    // Add token info for potential blacklisting on logout
+    req.token = token;
+    req.tokenExpiry = new Date(decoded.exp * 1000);
 
     next();
   } catch (error) {
@@ -53,15 +80,17 @@ const authenticateToken = async (req, res, next) => {
       return res.status(401).json({
         success: false,
         message: 'Invalid token.',
-        error: 'INVALID_TOKEN'
+        error: 'INVALID_TOKEN',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
     
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
-        message: 'Token expired.',
-        error: 'TOKEN_EXPIRED'
+        message: 'Token expired. Please refresh your token.',
+        error: 'TOKEN_EXPIRED',
+        expiredAt: error.expiredAt
       });
     }
 

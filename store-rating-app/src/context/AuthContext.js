@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI, userAPI, storeAPI, ratingAPI } from '../services/api';
+import { authAPI, userAPI, storeAPI, ratingAPI, dashboardAPI } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -258,89 +258,171 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Get all users (Admin only)
+  // Get all users (Admin only) with error handling
   const getAllUsers = async () => {
     try {
       const response = await userAPI.getAllUsers();
-      return response.data;
+      
+      // Handle different response structures
+      if (response?.data) {
+        if (Array.isArray(response.data)) {
+          return response.data;
+        } else if (response.data.users && Array.isArray(response.data.users)) {
+          return response.data.users;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          return response.data.data;
+        }
+      }
+      
+      console.warn('Unexpected response structure from users API:', response);
+      return [];
+      
     } catch (error) {
-      throw new Error(error.message || 'Failed to get users');
+      console.error('Error fetching users:', error);
+      // Return empty array to prevent UI crashes
+      return [];
     }
   };
 
-  // Get user by ID
+  // Get user by ID with error handling
   const getUserById = async (id) => {
     try {
       const response = await userAPI.getUserById(id);
-      return response.data;
-    } catch (error) {
-      throw new Error(error.message || 'Failed to get user');
-    }
-  };
-
-  // Get all stores (role-based access)
-  const getAllStores = async (filters = {}) => {
-    try {
-      // Admin users get full store management access
-      if (user?.role === 'system_admin') {
-        const response = await storeAPI.getAllStores(filters);
-        return response.data;
-      } else {
-        // Normal users and store owners get stores with user rating context
-        const response = await storeAPI.getStoresWithUserRating(filters);
+      
+      if (response?.data) {
+        if (response.data.user) {
+          return response.data.user;
+        } else if (response.data.data) {
+          return response.data.data;
+        }
         return response.data;
       }
+      
+      return null;
+      
     } catch (error) {
-      throw new Error(error.message || 'Failed to get stores');
+      console.error('Error fetching user by ID:', error);
+      return null;
     }
   };
 
-  // Get ratings for a store (Store Owner)
+  // Get all stores (role-based access) with enhanced error handling
+  const getAllStores = async (filters = {}) => {
+    try {
+      let response;
+      
+      // Admin users get full store management access
+      if (user?.role === 'system_admin') {
+        response = await storeAPI.getAllStores(filters);
+      } else {
+        // Normal users and store owners get stores with user rating context
+        response = await storeAPI.getStoresWithUserRating(filters);
+      }
+      
+      // Handle different response structures
+      if (response?.data) {
+        // If data is wrapped in a data property
+        if (Array.isArray(response.data)) {
+          return response.data;
+        } else if (response.data.stores && Array.isArray(response.data.stores)) {
+          return response.data.stores;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          return response.data.data;
+        }
+      }
+      
+      // Return empty array if no valid data structure found
+      console.warn('Unexpected response structure from stores API:', response);
+      return [];
+      
+    } catch (error) {
+      console.error('Error fetching stores:', error);
+      
+      // Return empty array instead of throwing to prevent app crashes
+      // This allows the UI to show "No stores found" instead of breaking
+      return [];
+    }
+  };
+
+  // Get ratings for a store (Store Owner) with error handling
   const getStoreRatings = async (storeId) => {
     try {
       const response = await ratingAPI.getStoreRatings(storeId);
-      return response.data;
+      return response.data || [];
     } catch (error) {
-      throw new Error(error.message || 'Failed to get store ratings');
+      console.error('Error fetching store ratings:', error);
+      // Return empty array to prevent UI crashes
+      return [];
     }
   };
 
-  // Get user's rating for a store
+  // Get user's rating for a store with error handling
   const getUserRating = async (storeId) => {
     try {
       const response = await ratingAPI.getUserRatingForStore(storeId);
-      return response.data;
+      return response.data || null;
     } catch (error) {
-      throw new Error(error.message || 'Failed to get user rating');
+      console.error('Error fetching user rating:', error);
+      // Return null to indicate no rating
+      return null;
     }
   };
 
-  // Submit or update rating
+  // Submit or update rating with enhanced error handling
   const submitRating = async (storeId, rating) => {
     try {
       const response = await ratingAPI.submitRating(storeId, rating);
       return response.data;
     } catch (error) {
-      throw new Error(error.message || 'Failed to submit rating');
+      console.error('Error submitting rating:', error);
+      throw new Error(error.message || 'Failed to submit rating. Please try again.');
     }
   };
 
-  // Get dashboard stats (Admin only)
+  // Get dashboard stats with role-based data
   const getDashboardStats = async () => {
     try {
-      // This would need to be implemented as a backend endpoint
-      const [usersResponse, storesResponse] = await Promise.all([
-        userAPI.getAllUsers(),
-        storeAPI.getAllStores()
-      ]);
+      // Use the new dashboard API endpoint
+      const response = await dashboardAPI.getDashboardData();
       
-      return {
-        totalUsers: usersResponse.data.length || 0,
-        totalStores: storesResponse.data.length || 0,
-        totalRatings: 0 // This would need a separate endpoint
-      };
+      if (response && response.stats) {
+        return response.stats;
+      }
+      
+      // Fallback to basic stats if new endpoint fails
+      console.warn('Dashboard stats API not available, using fallback');
+      
+      try {
+        const stores = await getAllStores();
+        return {
+          overview: {
+            totalStores: Array.isArray(stores) ? stores.length : 0,
+            averageRating: 0,
+            totalRatings: 0
+          }
+        };
+      } catch (fallbackError) {
+        console.error('Fallback stats failed:', fallbackError);
+        return {
+          overview: {
+            totalStores: 0,
+            averageRating: 0,
+            totalRatings: 0
+          }
+        };
+      }
+      
     } catch (error) {
-      throw new Error(error.message || 'Failed to get dashboard stats');
+      console.error('Error fetching dashboard stats:', error);
+      
+      // Return default stats structure to prevent UI crashes
+      return {
+        overview: {
+          totalStores: 0,
+          averageRating: 0,
+          totalRatings: 0
+        }
+      };
     }
   };
 

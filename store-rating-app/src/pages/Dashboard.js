@@ -36,12 +36,37 @@ const Dashboard = () => {
       try {
         setLoading(true);
         setError('');
-        const storeData = await getAllStores();
-        setStores(storeData || []);
-        setFilteredStores(storeData || []);
+        const response = await getAllStores();
+        
+        // Handle different response structures
+        let storeData = [];
+        if (response) {
+          if (Array.isArray(response)) {
+            storeData = response;
+          } else if (response.stores && Array.isArray(response.stores)) {
+            storeData = response.stores;
+          } else if (response.data && Array.isArray(response.data)) {
+            storeData = response.data;
+          }
+        }
+        
+        // Ensure each store has required properties with defaults
+        const processedStores = storeData.map(store => ({
+          id: store?.id || Math.random().toString(36),
+          name: store?.name || store?.store_name || 'Unknown Store',
+          location: store?.location || store?.store_location || 'Unknown Location',
+          description: store?.description || store?.store_description || '',
+          rating: parseFloat(store?.rating || store?.average_rating || 0),
+          totalRatings: parseInt(store?.totalRatings || store?.total_ratings || 0),
+          category: store?.category || 'Uncategorized',
+          image: store?.image || store?.store_image || null
+        }));
+        
+        setStores(processedStores);
+        setFilteredStores(processedStores);
       } catch (err) {
         console.error('Failed to load stores:', err);
-        setError('Failed to load stores. Please try again later.');
+        setError(err.message || 'Failed to load stores. Please try again later.');
         setStores([]);
         setFilteredStores([]);
       } finally {
@@ -54,31 +79,44 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    let filtered = stores;
+    // Ensure stores is an array
+    if (!Array.isArray(stores)) {
+      setFilteredStores([]);
+      return;
+    }
 
-    // Filter by search term
+    let filtered = [...stores];
+
+    // Filter by search term with null checks
     if (searchTerm) {
-      filtered = filtered.filter(store =>
-        store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        store.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        store.description.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(store => {
+        if (!store) return false;
+        const name = (store.name || '').toLowerCase();
+        const location = (store.location || '').toLowerCase();
+        const description = (store.description || '').toLowerCase();
+        const term = searchTerm.toLowerCase();
+        return name.includes(term) || location.includes(term) || description.includes(term);
+      });
+    }
+
+    // Filter by category with null checks
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(store => 
+        store && store.category === selectedCategory
       );
     }
 
-    // Filter by category
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(store => store.category === selectedCategory);
-    }
-
-    // Sort stores
-    filtered = [...filtered].sort((a, b) => {
+    // Sort stores with null checks
+    filtered = filtered.sort((a, b) => {
+      if (!a || !b) return 0;
+      
       switch (sortBy) {
         case 'rating':
-          return b.rating - a.rating;
+          return (b.rating || 0) - (a.rating || 0);
         case 'name':
-          return a.name.localeCompare(b.name);
+          return (a.name || '').localeCompare(b.name || '');
         case 'reviews':
-          return b.totalRatings - a.totalRatings;
+          return (b.totalRatings || 0) - (a.totalRatings || 0);
         default:
           return 0;
       }
@@ -100,12 +138,36 @@ const Dashboard = () => {
   };
 
   const getStats = () => {
+    // Ensure stores is an array before processing
+    const storeList = Array.isArray(stores) ? stores : [];
+    
+    // Calculate total stores
+    const totalStores = storeList.length;
+    
+    // Calculate average rating with null checks
+    let averageRating = '0.0';
+    if (storeList.length > 0) {
+      const validStores = storeList.filter(store => 
+        store && typeof store.rating === 'number' && !isNaN(store.rating)
+      );
+      if (validStores.length > 0) {
+        const sum = validStores.reduce((acc, store) => acc + store.rating, 0);
+        averageRating = (sum / validStores.length).toFixed(1);
+      }
+    }
+    
+    // Calculate total reviews with null checks
+    const totalReviews = storeList.reduce((sum, store) => {
+      if (store && typeof store.totalRatings === 'number' && !isNaN(store.totalRatings)) {
+        return sum + store.totalRatings;
+      }
+      return sum;
+    }, 0);
+    
     return {
-      totalStores: stores.length,
-      averageRating: stores.length > 0 
-        ? (stores.reduce((sum, store) => sum + store.rating, 0) / stores.length).toFixed(1)
-        : '0.0',
-      totalReviews: stores.reduce((sum, store) => sum + store.totalRatings, 0)
+      totalStores,
+      averageRating,
+      totalReviews
     };
   };
 
