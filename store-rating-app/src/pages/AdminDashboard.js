@@ -47,9 +47,29 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     // Load dashboard data
-    setStats(getDashboardStats());
-    setUsers(getAllUsers());
-    setStores(getAllStores());
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [statsData, usersData, storesData] = await Promise.all([
+          getDashboardStats(),
+          getAllUsers(),
+          getAllStores()
+        ]);
+        setStats(statsData);
+        setUsers(usersData);
+        setStores(storesData);
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        // Set default values to prevent filter errors
+        setStats({ totalUsers: 0, totalStores: 0, totalRatings: 0 });
+        setUsers([]);
+        setStores([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadDashboardData();
   }, [getDashboardStats, getAllUsers, getAllStores]);
 
   // Real-time validation
@@ -114,7 +134,8 @@ const AdminDashboard = () => {
       });
       setFormErrors({});
       // Refresh user list
-      setUsers(getAllUsers());
+      const refreshedUsers = await getAllUsers();
+      setUsers(refreshedUsers);
       // Hide form after success
       setTimeout(() => {
         setShowAddUserForm(false);
@@ -127,9 +148,13 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleViewUser = (userId) => {
-    const user = getUserById(userId);
-    setSelectedUser(user);
+  const handleViewUser = async (userId) => {
+    try {
+      const user = await getUserById(userId);
+      setSelectedUser(user);
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+    }
   };
 
   const handleFilterChange = (filterType, field, value) => {
